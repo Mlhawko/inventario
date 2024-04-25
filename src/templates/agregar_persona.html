@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agregar Persona</title>
+</head>
+<body>
+    <h1>Agregar Persona</h1>
+    <form action="{{ url_for('agregar_persona') }}" method="post">
+        <label for="nombre">Nombre:</label><br>
+        <input type="text" id="nombre" name="nombre"><br>
+        <label for="correo">Correo:</label><br>
+        <input type="text" id="correo" name="correo"><br>
+        <label for="area">Área:</label><br>
+        <input type="text" id="area" name="area"><br><br>
+        <input type="submit" value="Agregar">
+    </form>
+</body>
+</html>

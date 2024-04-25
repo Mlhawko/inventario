@@ -20,6 +20,17 @@ except pyodbc.Error as ex:
 
 @app.route('/')
 def index():
+    try:
+        cursor = conexion.cursor()
+        cursor.execute('SELECT * FROM Persona')
+        personas = cursor.fetchall()
+        cursor.close()
+        return render_template('index.html', personas=personas)
+    except pyodbc.Error as ex:
+        print(ex)
+
+@app.route('/adjuntos')
+def equipos():
     equipos = []
     try:
         cursor = conexion.cursor()
@@ -30,7 +41,54 @@ def index():
         cursor.close()
     except pyodbc.Error as ex:
         print(ex)
-    return render_template('index.html', equipos=equipos)
+    return render_template('detalle.html', equipos=equipos)
+
+@app.route('/agregar_personas', methods=['GET', 'POST'])
+def agregar_persona():
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        correo = request.form['correo']
+        area = request.form['area']
+        try:
+            cursor = conexion.cursor()
+            cursor.execute('INSERT INTO Persona (nombre, correo, area) VALUES (?, ?, ?)', (nombre, correo, area))
+            conexion.commit()
+            cursor.close()
+            return redirect(url_for('index'))
+        except pyodbc.Error as ex:
+            print(ex)
+    return render_template('agregar_persona.html')
+
+@app.route('/editar_persona/<int:id>', methods=['GET', 'POST'])
+def editar_persona(id):
+    try:
+        cursor = conexion.cursor()
+        if request.method == 'POST':
+            nombre = request.form['nombre']
+            correo = request.form['correo']
+            area = request.form['area']
+            cursor.execute('UPDATE Persona SET nombre=?, correo=?, area=? WHERE id=?', (nombre, correo, area, id))
+            conexion.commit()
+            cursor.close()
+            return redirect(url_for('index'))
+        else:
+            cursor.execute('SELECT * FROM Persona WHERE id=?', (id,))
+            persona = cursor.fetchone()
+            cursor.close()
+            return render_template('editar_persona.html', persona=persona)
+    except pyodbc.Error as ex:
+        print(ex)
+
+@app.route('/personas/<int:id>/eliminar', methods=['POST'])
+def eliminar_persona(id):
+    try:
+        cursor = conexion.cursor()
+        cursor.execute('DELETE FROM Persona WHERE id=?', (id,))
+        conexion.commit()
+        cursor.close()
+        return redirect(url_for('index'))
+    except pyodbc.Error as ex:
+        print(ex)
 
 @app.route('/modificar/<int:id>', methods=['GET', 'POST'])
 def modificar_equipo(id):

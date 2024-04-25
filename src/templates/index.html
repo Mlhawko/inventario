@@ -3,41 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Inventario</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script>
-        function confirmarEliminacion(id) {
-            if (confirm('¿Estás seguro de que quieres eliminar este equipo?')) {
-                window.location.href = '/eliminar/' + id;
-            }
-        }
-    </script>
+    <title>Listado de Personas</title>
 </head>
 <body>
-    <h1>Gestión de Inventario</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Tipo</th>
-                <th>Cantidad</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for equipo in equipos %}
-            <tr>
-                <td>{{ equipo['nombre'] }}</td>
-                <td>{{ equipo['tipo'] }}</td>
-                <td>{{ equipo['cantidad'] }}</td>
-                <td>
-                    <a href="{{ url_for('modificar_equipo', id=equipo['id']) }}">Modificar</a>
-                    <a href="javascript:void(0)" onclick="confirmarEliminacion({{ equipo['id'] }})">Eliminar</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
+    <h1>Listado de Personas</h1>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Nombres</th>
+            <th>Correo</th>
+            <th>Área</th>
+            <th>Acciones</th>
+        </tr>
+        {% for persona in personas %}
+        <tr>
+            <td>{{ persona.id }}</td>
+            <td>{{ persona.nombre }}</td>
+            <td>{{ persona.correo }}</td>
+            <td>{{ persona.area }}</td>
+            <td>
+                <a href="{{ url_for('editar_persona', id=persona.id) }}">Editar</a>
+                <form action="{{ url_for('eliminar_persona', id=persona.id) }}" method="post" style="display:inline;">
+                    <input type="submit" value="Eliminar" onclick="return confirm('¿Estás seguro de que quieres eliminar esta persona?')">
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
     </table>
-    <a href="{{ url_for('agregar_equipo') }}">Agregar Nuevo Equipo</a>
+    <a href="{{ url_for('agregar_persona') }}">Agregar Persona</a>
 </body>
 </html>
+
