@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Inventario</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        function confirmarEliminacion(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar este equipo?')) {
+                window.location.href = '/eliminar/' + id;
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Gestión de Inventario</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Cantidad</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for equipo in equipos %}
+            <tr>
+                <td>{{ equipo['nombre'] }}</td>
+                <td>{{ equipo['tipo'] }}</td>
+                <td>{{ equipo['cantidad'] }}</td>
+                <td>
+                    <a href="{{ url_for('modificar_equipo', id=equipo['id']) }}">Modificar</a>
+                    <a href="javascript:void(0)" onclick="confirmarEliminacion({{ equipo['id'] }})">Eliminar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('agregar_equipo') }}">Agregar Nuevo Equipo</a>
+</body>
+</html>
