@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Tipos de Equipo</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <header>
+        {% include 'menu.html' %}
+    </header>
+    <div class="container mt-4">
+        <h3>CRUD Tipos de Equipo</h3>
+        <form action="{{ url_for('crud_tipos_equipos') }}" method="POST">
+            <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre:</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" required>
+            </div>
+            <button type="submit" class="btn btn-primary" name="agregar">Agregar Tipo de Equipo</button>
+        </form>
+
+        {% if tipos_equipos %}
+        <table class="table mt-4">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tipo_equipo in tipos_equipos %}
+                <tr>
+                    <td>{{ tipo_equipo.id }}</td>
+                    <td>{{ tipo_equipo.nombre }}</td>
+                    <td>
+                        <form action="{{ url_for('crud_tipos_equipos') }}" method="POST" class="d-inline">
+                            <input type="hidden" name="editar" value="{{ tipo_equipo.id }}">
+                            <input type="text" class="form-control" name="nombre_editado" required>
+                            <button type="submit" class="btn btn-primary btn-sm mt-2" name="editar">Editar</button>
+                        </form>
+                        <form action="{{ url_for('crud_tipos_equipos') }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-danger btn-sm mt-2" name="eliminar" value="{{ tipo_equipo.id }}">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

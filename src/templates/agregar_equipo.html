@@ -14,10 +14,15 @@
                 <label for="nombre_equipo">Nombre del Equipo:</label>
                 <input type="text" class="form-control" id="nombre_equipo" name="nombre_equipo" required>
             </div>
-            <div class="form-group">
-                <label for="tipo">Tipo:</label>
-                <input type="text" class="form-control" id="tipo" name="tipo" required>
+            <div class="mb-3">
+                <label for="tipo_equipo" class="form-label">Tipo de Equipo:</label>
+                <select class="form-select" id="tipo_equipo" name="tipo_equipo" required>
+                    {% for tipo_equipo in tipos_equipos %}
+                    <option value="{{ tipo_equipo.id }}">{{ tipo_equipo.nombre }}</option>
+                    {% endfor %}
+                </select>
             </div>
+            
             <div class="form-group">
                 <label for="cantidad">Cantidad:</label>
                 <input type="number" class="form-control" id="cantidad" name="cantidad" required>

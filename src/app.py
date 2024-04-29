@@ -49,22 +49,30 @@ def listar_personas():
 @app.route('/agregar_persona', methods=['GET', 'POST'])
 def agregar_persona():
     if request.method == 'POST':
+        # Obtener datos del formulario
         nombre = request.form['nombre']
         correo = request.form['correo']
-        area = request.form['area']
+        area_id = request.form['area']
+
         try:
             cursor = conexion.cursor()
-            cursor.execute("INSERT INTO Persona (nombres, correo, area) VALUES (?, ?, ?)", (nombre, correo, area))
+            cursor.execute("INSERT INTO Persona (nombre, correo, area_id) VALUES (?, ?, ?)", (nombre, correo, area_id))
             conexion.commit()
             cursor.close()
-            flash('Persona agregada correctamente', 'success')
-            return redirect(url_for('listar_personas'))
+            flash('La persona ha sido agregada correctamente', 'success')
+            return redirect(url_for('index'))
         except pyodbc.Error as ex:
             print(ex)
-            flash('Error al agregar la persona', 'error')
+            flash('Ocurrió un error al agregar la persona', 'error')
             return redirect(url_for('agregar_persona'))
+
+    # Obtener las áreas disponibles para mostrar en el formulario
+    areas = obtener_areas()
+    if areas:
+        return render_template('agregar_persona.html', areas=areas)
     else:
-        return render_template('agregar_persona.html')
+        flash('Ocurrió un error al obtener las áreas', 'error')
+        return redirect(url_for('index'))
 
 # Ruta para editar una persona
 @app.route('/editar_persona/<int:id>', methods=['GET', 'POST'])
@@ -149,7 +157,7 @@ def equipos_disponibles():
 def mostrar_equipos():
     try:
         cursor = conexion.cursor()
-        cursor.execute('SELECT * FROM Equipos')
+        cursor.execute('SELECT * FROM Equipo')
         equipos = cursor.fetchall()
         cursor.close()
         return render_template('equipos.html', equipos=equipos)
@@ -165,9 +173,10 @@ def agregar_equipo():
         nombre = request.form['nombre']
         tipo = request.form['tipo']
         cantidad = request.form['cantidad']
+        
         try:
             cursor = conexion.cursor()
-            cursor.execute("INSERT INTO Equipos (nombre, tipo, cantidad) VALUES (?, ?, ?)", (nombre, tipo, cantidad))
+            cursor.execute("INSERT INTO Equipo (nombre, tipo, cantidad) VALUES (?, ?, ?)", (nombre, tipo, cantidad))
             conexion.commit()
             cursor.close()
             flash('Equipo agregado correctamente', 'success')
@@ -177,7 +186,12 @@ def agregar_equipo():
             flash('Error al agregar el equipo', 'error')
             return redirect(url_for('agregar_equipo'))
     else:
-        return render_template('agregar_equipo.html')
+        # Obtener lista de tipos de equipo desde la base de datos
+        tipos_equipos = obtener_tipos_equipos()
+
+        # Renderizar plantilla HTML con la lista de tipos de equipo
+        return render_template('agregar_equipo.html', tipos_equipos=tipos_equipos)
+
 
 
 @app.route('/equipos/<int:id>/editar', methods=['GET', 'POST'])
@@ -188,7 +202,7 @@ def editar_equipo(id):
         cantidad = request.form['cantidad']
         try:
             cursor = conexion.cursor()
-            cursor.execute("UPDATE Equipos SET nombre = ?, tipo = ?, cantidad = ? WHERE id = ?", (nombre, tipo, cantidad, id))
+            cursor.execute("UPDATE Equipo SET nombre = ?, tipo = ?, cantidad = ? WHERE id = ?", (nombre, tipo, cantidad, id))
             conexion.commit()
             cursor.close()
             flash('Equipo editado correctamente', 'success')
@@ -200,7 +214,7 @@ def editar_equipo(id):
     else:
         try:
             cursor = conexion.cursor()
-            cursor.execute("SELECT * FROM Equipos WHERE id = ?", (id,))
+            cursor.execute("SELECT * FROM Equipo WHERE id = ?", (id,))
             equipo = cursor.fetchone()
             cursor.close()
             return render_template('editar_equipo.html', equipo=equipo)
@@ -214,7 +228,7 @@ def editar_equipo(id):
 def eliminar_equipo(id):
     try:
         cursor = conexion.cursor()
-        cursor.execute("DELETE FROM Equipos WHERE id = ?", (id,))
+        cursor.execute("DELETE FROM Equipo WHERE id = ?", (id,))
         conexion.commit()
         cursor.close()
         flash('Equipo eliminado correctamente', 'success')
@@ -223,7 +237,151 @@ def eliminar_equipo(id):
         print(f'Error al eliminar el equipo: {ex}')
         flash('Error al eliminar el equipo', 'error')
         return redirect(url_for('mostrar_equipos'))
+#---------------------------------------------------
+#CRUD Area
+# Función para listar todas las áreas y permitir la edición en la misma página
+@app.route('/listar_areas', methods=['GET', 'POST'])
+def listar_areas():
+    if request.method == 'GET':
+        try:
+            cursor = conexion.cursor()
+            cursor.execute('SELECT * FROM Area')
+            areas = cursor.fetchall()
+            cursor.close()
+            return render_template('listar_areas.html', areas=areas)
+        except pyodbc.Error as ex:
+            print(ex)
+            flash('Ocurrió un error al listar las áreas', 'error')
+            return redirect(url_for('index'))
+    elif request.method == 'POST':
+        id_area = request.form.get('id_area')
+        nombre = request.form.get('nombre')
+        try:
+            cursor = conexion.cursor()
+            cursor.execute("UPDATE Area SET nombre = ? WHERE id = ?", (nombre, id_area))
+            conexion.commit()
+            cursor.close()
+            flash('Área actualizada correctamente', 'success')
+        except pyodbc.Error as ex:
+            print(ex)
+            flash('Error al actualizar el área', 'error')
+        return redirect(url_for('listar_areas'))
 
+
+@app.route('/crear_area', methods=['GET', 'POST'])
+def crear_area():
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        try:
+            cursor = conexion.cursor()
+            cursor.execute("INSERT INTO Area (nombre) VALUES (?)", (nombre,))
+            conexion.commit()
+            cursor.close()
+            flash('Área creada correctamente', 'success')
+            return redirect(url_for('listar_areas'))
+        except pyodbc.Error as ex:
+            print(ex)
+            flash('Error al crear el área', 'error')
+            return redirect(url_for('listar_areas'))
+    return render_template('listar_areas.html')
+
+
+@app.route('/eliminar_area/<int:id>', methods=['POST'])
+def eliminar_area(id):
+    if request.method == 'POST':
+        try:
+            cursor = conexion.cursor()
+            cursor.execute("DELETE FROM Area WHERE id = ?", (id,))
+            conexion.commit()
+            cursor.close()
+            flash('Área eliminada correctamente', 'success')
+            return redirect(url_for('listar_areas'))
+        except pyodbc.Error as ex:
+            print(ex)
+            flash('Error al eliminar el área', 'error')
+            return redirect(url_for('listar_areas'))
+    return 'Método no permitido'
+#-----------------------------------------------------------------
+#CRUD TIPOS
+@app.route('/crud_tipos_equipos', methods=['GET', 'POST'])
+def crud_tipos_equipos():
+    if request.method == 'POST':
+        if 'agregar' in request.form:
+            # Agregar un nuevo tipo de equipo
+            nombre = request.form['nombre']
+            if nombre:
+                try:
+                    cursor = conexion.cursor()
+                    cursor.execute("INSERT INTO TipoEquipo (nombre) VALUES (?)", (nombre,))
+                    conexion.commit()
+                    cursor.close()
+                    flash('El tipo de equipo ha sido agregado correctamente', 'success')
+                except pyodbc.Error as ex:
+                    print(ex)
+                    flash('Ocurrió un error al agregar el tipo de equipo', 'error')
+            else:
+                flash('Por favor, ingrese un nombre para el tipo de equipo', 'error')
+        elif 'eliminar' in request.form:
+            # Eliminar un tipo de equipo
+            tipo_equipo_id = request.form.get('eliminar')
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("DELETE FROM TipoEquipo WHERE id = ?", (tipo_equipo_id,))
+                conexion.commit()
+                cursor.close()
+                flash('El tipo de equipo ha sido eliminado correctamente', 'success')
+            except pyodbc.Error as ex:
+                print(ex)
+                flash('Ocurrió un error al eliminar el tipo de equipo', 'error')
+        elif 'editar' in request.form:
+            # Editar un tipo de equipo
+            tipo_equipo_id = request.form['editar']
+            nuevo_nombre = request.form['nombre_editado']
+            if nuevo_nombre:
+                try:
+                    cursor = conexion.cursor()
+                    cursor.execute("UPDATE TipoEquipo SET nombre = ? WHERE id = ?", (nuevo_nombre, tipo_equipo_id))
+                    conexion.commit()
+                    cursor.close()
+                    flash('El tipo de equipo ha sido actualizado correctamente', 'success')
+                except pyodbc.Error as ex:
+                    print(ex)
+                    flash('Ocurrió un error al actualizar el tipo de equipo', 'error')
+            else:
+                flash('Por favor, ingrese un nuevo nombre para el tipo de equipo', 'error')
+
+    # Obtener la lista de tipos de equipo
+    tipos_equipos = obtener_tipos_equipos()
+
+    return render_template('crud_tipos_equipos.html', tipos_equipos=tipos_equipos)
+
+def obtener_tipos_equipos():
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("SELECT id, nombre FROM TipoEquipo")
+        tipos_equipos = cursor.fetchall()
+        cursor.close()
+        return tipos_equipos
+    except pyodbc.Error as ex:
+        print(ex)
+        return None
+
+
+#--------------------------------------------------------------------------------
+# Obtener areas
+def obtener_areas():
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("SELECT id, nombre FROM Area")
+        areas = cursor.fetchall()
+        cursor.close()
+        return areas
+    except pyodbc.Error as ex:
+        print(ex)
+        return None
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 if __name__ == '__main__':
     app.run(debug=True)

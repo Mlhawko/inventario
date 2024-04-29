@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Areas</title>
+        <link rel="stylesheet"
+            href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    </head>
+    <body>
+        <header>
+            {% include 'menu.html' %}
+        </header>
+        <div class="container mt-5">
+            <h3>Listar Areas</h3>
+            <div class="row">
+                <div class="col-md-7">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for area in areas %}
+                            <tr>
+                                <td>{{ area.id }}</td>
+                                <td>
+                                    <form method="post"
+                                        action="{{ url_for('listar_areas') }}">
+                                        <input type="hidden" name="id_area"
+                                            value="{{ area.id }}">
+                                        <input type="text" name="nombre"
+                                            value="{{ area.nombre }}">
+                                        <button type="submit"
+                                            class="btn btn-primary">Actualizar</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <form method="post"
+                                        action="{{ url_for('eliminar_area', id=area.id) }}">
+                                        <button type="submit"
+                                            class="btn btn-danger">Eliminar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <h3>Agregar Area</h3>
+                    <form method="post" action="{{ url_for('crear_area') }}">
+                        <div class="form-group">
+                            <label for="nombre">Nombre del Area:</label>
+                            <input type="text" class="form-control" id="nombre"
+                                name="nombre" required>
+                        </div>
+                        <button type="submit"
+                            class="btn btn-success">Agregar</button>
+                        <a href="{{ url_for('index') }}">
+                            <button type="button"
+                                class="btn btn-primary">Volver</button>
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script
+            src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+        <script
+            src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    </body>
+</html>
