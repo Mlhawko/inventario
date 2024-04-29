@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agregar Equipo</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Agregar Equipo</h2>
+        <form action="{{ url_for('agregar_equipo', id_persona=id_persona) }}" method="POST">
+            <div class="form-group">
+                <label for="nombre_equipo">Nombre del Equipo:</label>
+                <input type="text" class="form-control" id="nombre_equipo" name="nombre_equipo" required>
+            </div>
+            <div class="form-group">
+                <label for="tipo">Tipo:</label>
+                <input type="text" class="form-control" id="tipo" name="tipo" required>
+            </div>
+            <div class="form-group">
+                <label for="cantidad">Cantidad:</label>
+                <input type="number" class="form-control" id="cantidad" name="cantidad" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Agregar Equipo</button>
+
+            <a href="{{ url_for('mostrar_equipos', id_persona=id_persona) }}">
+                <button type="button" class="btn btn-primary">Volver</button>
+            </a>
+        </form>
+
+        
+    </div>
+</body>
+</html>

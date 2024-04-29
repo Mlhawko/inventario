@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Equipos</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <header>
+        {% include 'menu.html' %}
+    </header>
+
+    <div class="container">
+        <h1>Lista de Equipos</h1>
+        <a href="{{ url_for('agregar_equipo') }}" class="btn btn-primary mb-3">Agregar Equipo</a>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for equipo in equipos %}
+                <tr>
+                    <td>{{ equipo.id }}</td>
+                    <td>{{ equipo.nombre }}</td>
+                    <td>{{ equipo.tipo }}</td>
+                    <td>{{ equipo.cantidad }}</td>
+                    <td>
+                        <a href="{{ url_for('editar_equipo', id=equipo.id) }}" class="btn btn-warning btn-sm">Editar</a>
+                        <form action="{{ url_for('eliminar_equipo', id=equipo.id) }}" method="post" style="display: inline-block;">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este equipo?')">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

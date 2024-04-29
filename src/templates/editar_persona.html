@@ -4,17 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Persona</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-    <h1>Editar Persona</h1>
-    <form action="{{ url_for('editar_persona', id=persona.id) }}" method="post">
-        <label for="nombre">Nombre:</label><br>
-        <input type="text" id="nombre" name="nombre" value="{{ persona.nombre }}"><br>
-        <label for="correo">Correo:</label><br>
-        <input type="text" id="correo" name="correo" value="{{ persona.correo }}"><br>
-        <label for="area">Área:</label><br>
-        <input type="text" id="area" name="area" value="{{ persona.area }}"><br><br>
-        <input type="submit" value="Guardar">
-    </form>
+    <header>
+        {% include 'menu.html' %}
+    </header>
+    <div class="container">
+        <h1>Editar Persona</h1>
+        <form method="POST">
+            <div class="form-group">
+                <label for="nombre">Nombre:</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" value="{{ persona.nombre }}" required>
+            </div>
+            <div class="form-group">
+                <label for="correo">Correo:</label>
+                <input type="email" class="form-control" id="correo" name="correo" value="{{ persona.correo }}" required>
+            </div>
+            <div class="form-group">
+                <label for="area">Área:</label>
+                <input type="text" class="form-control" id="area" name="area" value="{{ persona.area }}" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            <a href="{{ url_for('index') }}">
+                <button type="button" class="btn btn-primary">Volver</button>
+            </a>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

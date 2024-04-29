@@ -1,0 +1,36 @@
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <img src="/static/logochf.png" alt="Logo" class="logo" style="width: 100%; max-width: 150px;">
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="masterDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Master
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="masterDropdown">
+                            <a class="dropdown-item" href="{{ url_for('listar_personas') }}">Personas</a>
+                            <a class="dropdown-item" href="{{ url_for('mostrar_equipos') }}">Equipos</a>
+                            <a class="dropdown-item" href="#">Área</a>
+                            <a class="dropdown-item" href="#">Categoria</a>
+                            
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Lista de Personas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('equipos_disponibles') }}">Equipos Disponibles</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Celulares Disponibles</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
