@@ -7,34 +7,77 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
+    <header>
+        {% include 'menu.html' %}
+    </header>
+
     <div class="container mt-5">
         <h2 class="mb-4">Agregar Equipo</h2>
-        <form action="{{ url_for('agregar_equipo', id_persona=id_persona) }}" method="POST">
-            <div class="form-group">
-                <label for="nombre_equipo">Nombre del Equipo:</label>
-                <input type="text" class="form-control" id="nombre_equipo" name="nombre_equipo" required>
-            </div>
+        <form action="{{ url_for('agregar_equipo')}}" method="POST">
             <div class="mb-3">
                 <label for="tipo_equipo" class="form-label">Tipo de Equipo:</label>
                 <select class="form-select" id="tipo_equipo" name="tipo_equipo" required>
+                    <option value="" disabled selected>Seleccione una opción</option>
                     {% for tipo_equipo in tipos_equipos %}
                     <option value="{{ tipo_equipo.id }}">{{ tipo_equipo.nombre }}</option>
                     {% endfor %}
                 </select>
             </div>
-            
             <div class="form-group">
-                <label for="cantidad">Cantidad:</label>
-                <input type="number" class="form-control" id="cantidad" name="cantidad" required>
+                <label for="nombre_equipo">Nombre del Equipo:</label>
+                <input type="text" class="form-control" id="nombre_equipo" name="nombre_equipo" required>
             </div>
+            
+            <!-- Campos adicionales para Notebook -->
+            <div id="notebook_fields" style="display: none;">
+                <div class="form-group">
+                    <label for="memoria_ram">Memoria RAM:</label>
+                    <input type="text" class="form-control" id="memoria_ram" name="memoria_ram">
+                </div>
+                <div class="form-group">
+                    <label for="capacidad_disco">Capacidad de Disco:</label>
+                    <input type="text" class="form-control" id="capacidad_disco" name="capacidad_disco">
+                </div>
+            </div>
+            <!-- Campos adicionales para Celular -->
+            <div id="celular_fields" style="display: none;">
+                <div class="form-group">
+                    <label for="modelo">Modelo:</label>
+                    <input type="text" class="form-control" id="modelo" name="modelo">
+                </div>
+                <div class="form-group">
+                    <label for="sistema_operativo">Sistema Operativo:</label>
+                    <input type="text" class="form-control" id="sistema_operativo" name="sistema_operativo">
+                </div>
+            </div>
+            
             <button type="submit" class="btn btn-primary">Agregar Equipo</button>
 
-            <a href="{{ url_for('mostrar_equipos', id_persona=id_persona) }}">
+            <a href="{{ url_for('mostrar_equipos') }}">
                 <button type="button" class="btn btn-primary">Volver</button>
             </a>
         </form>
 
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script>
+            document.getElementById('tipo_equipo').addEventListener('change', function() {
+                var tipo_equipo = this.value;
+                if (tipo_equipo === '1') {
+                    document.getElementById('notebook_fields').style.display = 'block';
+                    document.getElementById('celular_fields').style.display = 'none';
+                } else if (tipo_equipo === '2') {
+                    document.getElementById('notebook_fields').style.display = 'none';
+                    document.getElementById('celular_fields').style.display = 'block';
+                } else {
+                    document.getElementById('notebook_fields').style.display = 'none';
+                    document.getElementById('celular_fields').style.display = 'none';
+                }
+            });
+        </script>
         
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

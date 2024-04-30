@@ -27,7 +27,9 @@ except pyodbc.Error as ex:
 def index():
     try:
         cursor = conexion.cursor()
-        cursor.execute('SELECT * FROM Persona')
+        cursor.execute('''SELECT Persona.nombres, Persona.correo, Area.nombre AS area_nombre
+            FROM Persona
+            INNER JOIN Area ON Persona.area_id = Area.id ''')
         personas = cursor.fetchall()
         cursor.close()
         return render_template('index.html', personas=personas)
@@ -39,7 +41,9 @@ def index():
 def listar_personas():
     try:
         cursor = conexion.cursor()
-        cursor.execute('SELECT * FROM Persona')
+        cursor.execute('''SELECT Persona.id, Persona.nombres, Persona.correo, Area.nombre AS area_nombre
+            FROM Persona
+            INNER JOIN Area ON Persona.area_id = Area.id ''')
         personas = cursor.fetchall()
         cursor.close()
         return render_template('listar_personas.html', personas=personas)
@@ -56,7 +60,7 @@ def agregar_persona():
 
         try:
             cursor = conexion.cursor()
-            cursor.execute("INSERT INTO Persona (nombre, correo, area_id) VALUES (?, ?, ?)", (nombre, correo, area_id))
+            cursor.execute("INSERT INTO Persona (nombres, correo, area_id) VALUES (?, ?, ?)", (nombre, correo, area_id))
             conexion.commit()
             cursor.close()
             flash('La persona ha sido agregada correctamente', 'success')
@@ -74,16 +78,15 @@ def agregar_persona():
         flash('Ocurrió un error al obtener las áreas', 'error')
         return redirect(url_for('index'))
 
-# Ruta para editar una persona
 @app.route('/editar_persona/<int:id>', methods=['GET', 'POST'])
 def editar_persona(id):
     if request.method == 'POST':
         nombre = request.form['nombre']
         correo = request.form['correo']
-        area = request.form['area']
+        area_id = request.form['area']  # Cambio aquí: obtener el ID del área seleccionada
         try:
             cursor = conexion.cursor()
-            cursor.execute("UPDATE Persona SET nombres=?, correo=?, area=? WHERE id=?", (nombre, correo, area, id))
+            cursor.execute("UPDATE Persona SET nombres=?, correo=?, area_id=? WHERE id=?", (nombre, correo, area_id, id))  # Cambio aquí: usar area_id en lugar de area
             conexion.commit()
             cursor.close()
             flash('Persona actualizada correctamente', 'success')
@@ -97,11 +100,17 @@ def editar_persona(id):
             cursor = conexion.cursor()
             cursor.execute("SELECT * FROM Persona WHERE id=?", (id,))
             persona = cursor.fetchone()
+            
+            # Obtener la lista de áreas
+            cursor.execute("SELECT * FROM Area")
+            areas = cursor.fetchall()
+            
             cursor.close()
-            return render_template('editar_persona.html', persona=persona)
+            return render_template('editar_persona.html', persona=persona, areas=areas)  # Pasar las áreas a la plantilla
         except pyodbc.Error as ex:
             print(ex)
             return 'Error al obtener la persona'
+
 
 # Ruta para eliminar una persona
 @app.route('/eliminar_persona/<int:id>', methods=['POST'])
@@ -136,31 +145,29 @@ def buscar_personas():
         return 'Error al buscar personas'
 #----------------------------------------
 # Mostrar equipos disponibles
-@app.route('/equipos_disponibles')
-def equipos_disponibles():
+@app.route('/equipos/disponibles')
+def mostrar_equipos_disponibles():
     try:
         cursor = conexion.cursor()
-        cursor.execute('''
-            SELECT nombre, tipo, cantidad
-            FROM Equipos
-            WHERE persona_id IS NULL;
-        ''')
-        equipos_disponibles = cursor.fetchall()
+        cursor.execute("SELECT id, nombre FROM Equipo WHERE id_estado = 1")  # Suponiendo que 1 es el ID del estado "disponible"
+        equipos = cursor.fetchall()
         cursor.close()
-        return render_template('equipos_disponibles.html', equipos=equipos_disponibles)
+        return render_template('equipos_disponibles.html', equipos=equipos)
     except pyodbc.Error as ex:
-        print(ex)
-        return 'Error al obtener los equipos disponibles'
+        print(f'Error al obtener los equipos disponibles: {ex}')
+        flash('Error al obtener los equipos disponibles', 'error')
+        return redirect(url_for('index'))
+
 #----------------------------------------------------------
 # CRUD de equipos:
-@app.route('/equipos')
+@app.route('/mostrar_equipos')
 def mostrar_equipos():
     try:
         cursor = conexion.cursor()
-        cursor.execute('SELECT * FROM Equipo')
+        cursor.execute("SELECT Equipo.id, Equipo.nombre, TipoEquipo.nombre AS tipo_nombre FROM Equipo INNER JOIN TipoEquipo ON Equipo.tipo_equipo_id = TipoEquipo.id")
         equipos = cursor.fetchall()
         cursor.close()
-        return render_template('equipos.html', equipos=equipos)
+        return render_template('mostrar_equipos.html', equipos=equipos)
     except pyodbc.Error as ex:
         print(f'Error al obtener los equipos: {ex}')
         flash('Error al obtener los equipos', 'error')
@@ -170,13 +177,26 @@ def mostrar_equipos():
 @app.route('/equipos/agregar', methods=['GET', 'POST'])
 def agregar_equipo():
     if request.method == 'POST':
-        nombre = request.form['nombre']
-        tipo = request.form['tipo']
-        cantidad = request.form['cantidad']
-        
+        nombre = request.form['nombre_equipo']
+        tipo_equipo_id = request.form['tipo_equipo'] 
+
         try:
             cursor = conexion.cursor()
-            cursor.execute("INSERT INTO Equipo (nombre, tipo, cantidad) VALUES (?, ?, ?)", (nombre, tipo, cantidad))
+            cursor.execute("INSERT INTO Equipo (nombre, tipo_equipo_id, id_estado) VALUES (?, ?, ?)", (nombre, tipo_equipo_id, 1))
+            conexion.commit()
+
+            # Obtener el ID del equipo recién insertado
+            equipo_id = cursor.execute("SELECT SCOPE_IDENTITY()").fetchone()[0]
+
+            if tipo_equipo_id == '1':  # ID del tipo de equipo Notebook
+                memoria_ram = request.form['memoria_ram']
+                capacidad_disco = request.form['capacidad_disco']
+                cursor.execute("INSERT INTO Notebook (tipo_equipo_id, nombre, memoria_ram, capacidad_disco) VALUES (?, ?, ?, ?)", (tipo_equipo_id, nombre, memoria_ram, capacidad_disco))
+            elif tipo_equipo_id == '2':  # ID del tipo de equipo Celular
+                modelo = request.form['modelo']
+                sistema_operativo = request.form['sistema_operativo']
+                cursor.execute("INSERT INTO Celular (tipo_equipo_id, nombre, modelo, sistema_operativo) VALUES (?, ?, ?, ?)", (tipo_equipo_id, nombre, modelo, sistema_operativo))
+
             conexion.commit()
             cursor.close()
             flash('Equipo agregado correctamente', 'success')
@@ -186,23 +206,23 @@ def agregar_equipo():
             flash('Error al agregar el equipo', 'error')
             return redirect(url_for('agregar_equipo'))
     else:
-        # Obtener lista de tipos de equipo desde la base de datos
         tipos_equipos = obtener_tipos_equipos()
-
-        # Renderizar plantilla HTML con la lista de tipos de equipo
         return render_template('agregar_equipo.html', tipos_equipos=tipos_equipos)
 
 
+
+
+
+from flask import render_template
 
 @app.route('/equipos/<int:id>/editar', methods=['GET', 'POST'])
 def editar_equipo(id):
     if request.method == 'POST':
         nombre = request.form['nombre']
         tipo = request.form['tipo']
-        cantidad = request.form['cantidad']
         try:
             cursor = conexion.cursor()
-            cursor.execute("UPDATE Equipo SET nombre = ?, tipo = ?, cantidad = ? WHERE id = ?", (nombre, tipo, cantidad, id))
+            cursor.execute("UPDATE Equipo SET nombre = ?, tipo = ? WHERE id = ?", (nombre, tipo, id))
             conexion.commit()
             cursor.close()
             flash('Equipo editado correctamente', 'success')
@@ -216,12 +236,17 @@ def editar_equipo(id):
             cursor = conexion.cursor()
             cursor.execute("SELECT * FROM Equipo WHERE id = ?", (id,))
             equipo = cursor.fetchone()
+
+            # Obtener lista de tipos de equipo desde la base de datos
+            tipos_equipos = obtener_tipos_equipos()
+
             cursor.close()
-            return render_template('editar_equipo.html', equipo=equipo)
+            return render_template('editar_equipo.html', equipo=equipo, tipos_equipos=tipos_equipos)
         except pyodbc.Error as ex:
             print(f'Error al obtener el equipo: {ex}')
             flash('Error al obtener el equipo', 'error')
             return redirect(url_for('mostrar_equipos'))
+
 
 
 @app.route('/equipos/<int:id>/eliminar', methods=['POST'])
@@ -383,5 +408,4 @@ def obtener_areas():
 if __name__ == '__main__':
     app.run(debug=True)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+
