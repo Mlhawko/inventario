@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Equipo</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <header>
+        {% include 'menu.html' %}
+    </header>
+
+    <div class="container mt-5">
+        <h2 class="mb-4">Detalle de Equipo</h2>
+        <h3>{{ equipo.nombre }}</h3>
+        <p>Tipo: {{ equipo.tipo_equipo }}</p>
+
+        
+            {% if tipo_equipo_id == 1 %}
+                <h4>Detalles de Notebook</h4>
+                <p>Memoria RAM: {{ Notebook.memoria_ram }}</p>
+                <p>Capacidad de Disco: {{ Notebook.capacidad_disco }}</p>
+            {% elif tipo_equipo_id == 2 %}
+                <h4>Detalles de Celular</h4>
+                <p>Modelo: {{ Celular.modelo }}</p>
+                <p>Sistema Operativo: {{ Celular.sistema_operativo }}</p>
+            {% endif %}
+        
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

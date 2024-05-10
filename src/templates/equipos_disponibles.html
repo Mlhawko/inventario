@@ -15,11 +15,24 @@
         <h1>Equipos Disponibles</h1>
         <div class="row">
             <div class="col-md-7">
-                <ul class="list-group">
-                    {% for equipo in equipos %}
-                    <li class="list-group-item">{{ equipo.nombre }}</li>
-                    {% endfor %}
-                </ul>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="fw-bold">Equipo disponible</th>
+                            <th class="fw-bold">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for equipo in equipos %}
+                        <tr>
+                            <td>{{ equipo.nombre }}</td>
+                            <td>
+                                <a href="{{ url_for('asignar_equipo', equipo_id=equipo.id) }}" class="btn btn-primary">Asignar</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

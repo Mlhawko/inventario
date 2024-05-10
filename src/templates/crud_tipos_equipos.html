@@ -1,23 +1,42 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRUD Tipos de Equipo</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tipos de Equipo</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <style>
+        body {
+            background-color: beige;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+    </style>
 </head>
+
 <body>
     <header>
         {% include 'menu.html' %}
     </header>
     <div class="container mt-4">
-        <h3>CRUD Tipos de Equipo</h3>
+        <h3>Maestro de Tipos de Equipo</h3>
         <form action="{{ url_for('crud_tipos_equipos') }}" method="POST">
             <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre:</label>
-                <input type="text" class="form-control" id="nombre" name="nombre" required>
+                <input type="text" class="form-control" id="nombre" name="nombre" required />
             </div>
-            <button type="submit" class="btn btn-primary" name="agregar">Agregar Tipo de Equipo</button>
+            <button type="submit" class="btn btn-primary float-left" name="agregar">Agregar Tipo de Equipo</button>
+            <a href="{{ url_for('index') }}">
+                <button type="button" class="btn btn-primary float-left ml-2">Volver</button>
+            </a>
+            <div class="clearfix"></div>
         </form>
 
         {% if tipos_equipos %}
@@ -26,7 +45,7 @@
                 <tr>
                     <th>ID</th>
                     <th>Nombre</th>
-                    <th>Acciones</th>
+                    <th>Editar</th>
                 </tr>
             </thead>
             <tbody>
@@ -34,14 +53,15 @@
                 <tr>
                     <td>{{ tipo_equipo.id }}</td>
                     <td>{{ tipo_equipo.nombre }}</td>
-                    <td>
+                    <td class="text-right">
                         <form action="{{ url_for('crud_tipos_equipos') }}" method="POST" class="d-inline">
-                            <input type="hidden" name="editar" value="{{ tipo_equipo.id }}">
-                            <input type="text" class="form-control" name="nombre_editado" required>
+                            <input type="hidden" name="editar" value="{{ tipo_equipo.id }}" />
+                            <input type="text" class="form-control" name="nombre_editado" required />
                             <button type="submit" class="btn btn-primary btn-sm mt-2" name="editar">Editar</button>
                         </form>
                         <form action="{{ url_for('crud_tipos_equipos') }}" method="POST" class="d-inline">
-                            <button type="submit" class="btn btn-danger btn-sm mt-2" name="eliminar" value="{{ tipo_equipo.id }}">Eliminar</button>
+                            <button type="submit" class="btn btn-danger btn-sm mt-2" name="eliminar"
+                                value="{{ tipo_equipo.id }}">Eliminar</button>
                         </form>
                     </td>
                 </tr>
@@ -55,4 +75,5 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>

@@ -4,80 +4,92 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agregar Equipo</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <header>
-        {% include 'menu.html' %}
+        <!-- Aquí puedes incluir tu menú si lo tienes -->
     </header>
-
     <div class="container mt-5">
-        <h2 class="mb-4">Agregar Equipo</h2>
-        <form action="{{ url_for('agregar_equipo')}}" method="POST">
-            <div class="mb-3">
-                <label for="tipo_equipo" class="form-label">Tipo de Equipo:</label>
-                <select class="form-select" id="tipo_equipo" name="tipo_equipo" required>
-                    <option value="" disabled selected>Seleccione una opción</option>
+        <h1 class="mb-4">Agregar Equipo</h1>
+        <form method="POST" action="/agregar_equipo">
+            <div class="form-group">
+                <label for="seccion">Seccion:</label>
+                <select class="form-control" id="seccion" name="seccion">
+                    <option value="1">Equipo</option>
+                    <option value="2">Celular</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="tipoequipo">Tipo de Equipo:</label>
+                <select class="form-control" id="tipoequipo" name="tipoequipo">
                     {% for tipo_equipo in tipos_equipos %}
-                    <option value="{{ tipo_equipo.id }}">{{ tipo_equipo.nombre }}</option>
+                        <option value="{{ tipo_equipo[0] }}">{{ tipo_equipo[1] }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="form-group">
-                <label for="nombre_equipo">Nombre del Equipo:</label>
-                <input type="text" class="form-control" id="nombre_equipo" name="nombre_equipo" required>
+                <label for="nombre">Nombre del Equipo:</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" required>
             </div>
-            
-            <!-- Campos adicionales para Notebook -->
-            <div id="notebook_fields" style="display: none;">
-                <div class="form-group">
-                    <label for="memoria_ram">Memoria RAM:</label>
-                    <input type="text" class="form-control" id="memoria_ram" name="memoria_ram">
-                </div>
-                <div class="form-group">
-                    <label for="capacidad_disco">Capacidad de Disco:</label>
-                    <input type="text" class="form-control" id="capacidad_disco" name="capacidad_disco">
-                </div>
+            <div class="form-group">
+                <label for="marca">Marca:</label>
+                <input type="text" class="form-control" id="marca" name="marca" required>
             </div>
-            <!-- Campos adicionales para Celular -->
-            <div id="celular_fields" style="display: none;">
-                <div class="form-group">
-                    <label for="modelo">Modelo:</label>
-                    <input type="text" class="form-control" id="modelo" name="modelo">
-                </div>
-                <div class="form-group">
-                    <label for="sistema_operativo">Sistema Operativo:</label>
-                    <input type="text" class="form-control" id="sistema_operativo" name="sistema_operativo">
-                </div>
+            <div class="form-group">
+                <label for="modelo">Modelo:</label>
+                <input type="text" class="form-control" id="modelo" name="modelo" required>
             </div>
-            
+            <div class="form-group">
+                <label for="ram">RAM:</label>
+                <input type="text" class="form-control" id="ram" name="ram">
+            </div>
+            <div class="form-group">
+                <label for="procesador">Procesador:</label>
+                <input type="text" class="form-control" id="procesador" name="procesador">
+            </div>
+            <div class="form-group">
+                <label for="almc">Almacenamiento:</label>
+                <input type="text" class="form-control" id="almc" name="almc">
+            </div>
+            <div class="form-group">
+                <label for="perif">Periféricos:</label>
+                <input type="text" class="form-control" id="perif" name="perif">
+            </div>
+            <div class="form-group">
+                <label for="numsello">Número de Sello:</label>
+                <input type="text" class="form-control" id="numsello" name="numsello">
+            </div>
+            <div class="form-group">
+                <label for="serial">Serial:</label>
+                <input type="text" class="form-control" id="serial" name="serial">
+            </div>
+            <div class="form-group">
+                <label for="numproducto">Número de Producto:</label>
+                <input type="text" class="form-control" id="numproducto" name="numproducto">
+            </div>
+            <div class="form-group">
+                <label for="tipoimpresion">Tipo de Impresión:</label>
+                <input type="text" class="form-control" id="tipoimpresion" name="tipoimpresion">
+            </div>
+            <!-- Agrega los campos restantes según sea necesario -->
+            <div class="form-group">
+                <label for="estadoequipo_id">Estado del Equipo:</label>
+                <input type="text" class="form-control" id="estadoequipo_id" name="estadoequipo_id">
+            </div>
+            <!-- Incluye el campo observaciones -->
+            <div class="form-group">
+                <label for="observaciones">Observaciones:</label>
+                <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+            </div>
             <button type="submit" class="btn btn-primary">Agregar Equipo</button>
-
-            <a href="{{ url_for('mostrar_equipos') }}">
-                <button type="button" class="btn btn-primary">Volver</button>
-            </a>
         </form>
-
-        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-        <script>
-            document.getElementById('tipo_equipo').addEventListener('change', function() {
-                var tipo_equipo = this.value;
-                if (tipo_equipo === '1') {
-                    document.getElementById('notebook_fields').style.display = 'block';
-                    document.getElementById('celular_fields').style.display = 'none';
-                } else if (tipo_equipo === '2') {
-                    document.getElementById('notebook_fields').style.display = 'none';
-                    document.getElementById('celular_fields').style.display = 'block';
-                } else {
-                    document.getElementById('notebook_fields').style.display = 'none';
-                    document.getElementById('celular_fields').style.display = 'none';
-                }
-            });
-        </script>
-        
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <!-- Bootstrap JS y dependencias opcionales -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

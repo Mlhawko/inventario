@@ -33,10 +33,7 @@
                             <td>{{ persona.correo }}</td>
                             <td>{{ persona.area_nombre }}</td>
                             <td>
-                                <a href="{{ url_for('editar_persona', id=persona.id) }}" class="btn btn-sm btn-primary">Editar</a>
-                                <form action="{{ url_for('eliminar_persona', id=persona.id) }}" method="POST" style="display: inline-block;">
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de que quieres eliminar esta persona?')">Eliminar</button>
-                                </form>
+                                
                             </td>
                         </tr>
                         {% endfor %}

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Inventario</title>
+    <link rel="stylesheet" href="styles.css" /> <!-- Enlazar el archivo CSS común -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
@@ -16,9 +17,12 @@
         <h1>Lista de Personas</h1>
         <div class="row">
             <div class="col-md-7">
+                <button type="button" class="btn btn-primary">Asignar equipo</button>
+
                 <table class="table">
                     <thead>
                         <tr>
+                            <th>Reporte</th>
                             <th>Nombre</th>
                             <th>Correo</th>
                             <th>Área</th>
@@ -26,13 +30,15 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <td><button type="button" class="btn btn-secondary">Reporte</button></td>
                         {% for persona in personas %}
                         <tr>
+                            
                             <td>{{ persona.nombres }}</td>
                             <td>{{ persona.correo }}</td>
-                            <td>{{ persona.area_nombre }}</td> <!-- Mostrar el nombre del área -->
+                            <td>{{ persona.area_nombre }}</td>
                             <td>
-                                <button type="button" class="btn btn-info">Detalle</button>
+                                <a href="{{ url_for('detalle_persona', persona_id=persona.id) }}" class="btn btn-info">Detalle</a>
                             </td>
                         </tr>
                         {% endfor %}
