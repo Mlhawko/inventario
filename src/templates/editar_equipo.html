@@ -1,51 +1,184 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Equipo</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Estilo personalizado para el formulario */
+        .custom-form {
+            max-width: 600px;
+            /* Ancho máximo del formulario */
+            margin: 0 auto;
+            /* Centrar el formulario horizontalmente */
+            padding: 5px;
+            /* Espaciado interno */
+            border: 1px solid #ccc;
+            /* Borde */
+            border-radius: 10px;
+            /* Radio de los bordes */
+            font-size: 0.8rem;
+            /* Tamaño de fuente más pequeño */
+        }
+
+        /* Ajuste de espaciado vertical */
+        .form-group:not(:last-child) {
+            margin-bottom: 4px;
+        }
+
+        /* Ajuste de tamaño de fuente de etiquetas */
+        label {
+            font-size: 0.8rem;
+        }
+
+        /* Ajuste de tamaño de fuente de inputs */
+        input[type="text"],
+        select,
+        textarea {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Editar Equipo</h1>
-    
-    {% if equipo %}
-    <form action="{{ url_for('editar_equipo', id=equipo['id']) }}" method="POST" id="editar_equipo_form">
-        <label for="nombre">Nombre:</label>
-        <input type="text" id="nombre" name="nombre"><br>
-
-        <label for="marca">Marca:</label>
-        <input type="text" id="marca" name="marca" value="{{ equipo['marca'] }}"><br>
-
-        <label for="modelo">Modelo:</label>
-        <input type="text" id="modelo" name="modelo" value="{{ equipo['modelo'] }}"><br>
-
-        <label for="serial">Serial:</label>
-        <input type="text" id="serial" name="serial" value="{{ equipo['serial'] }}"><br>
-
-        <label for="estado_equipo">Estado del Equipo:</label>
-        <select id="estado_equipo" name="estado_equipo">
-            {% for estado in estados %}
-                <option value="{{ estado['id'] }}" {% if estado['id'] == equipo['estadoequipo_id'] %} selected {% endif %}>{{ estado['nombre'] }}</option>
-            {% endfor %}
-        </select><br>
-
-        <label for="observaciones">Observaciones:</label><br>
-        <textarea id="observaciones" name="observaciones" rows="4" cols="50">{{ equipo['observaciones'] }}</textarea><br>
-        
-        {% if detalle_equipo %}
-            {% if equipo['unidad_id'] is not none %}
-                <label for="nombre_unidad">Nombre de la Unidad:</label>
-                <input type="text" id="unidad_nombre" name="unidad_nombre" value="{{ detalle_equipo['nombre_e'] }}"><br>
-            {% elif equipo['celular_id'] is not none %}
-                <label for="nombre_celular">Nombre del Celular:</label>
-                <input type="text" id="celular_nombre" name="celular_nombre" value="{{ detalle_equipo['nombre'] }}"><br>
+    <header>
+        {% include 'menu.html' %}
+    </header>
+    <div class="container mt-4">
+        <form action="{{ url_for('editar_equipo', id=equipo.id) }}" method="POST" class="custom-form">
+            <h1 class="mb-3">Editar Equipo</h1>
+            {% if detalle_equipo %}
+            {% if tipo_equipo == 'unidad' %}
+            <div class="form-group">
+                <label for="nombre">Nombre de la Unidad:</label>
+                <input type="text" id="nombre" name="nombre" value="{{ detalle_equipo['nombre_e'] }}">
+            </div>
+            {% elif tipo_equipo == 'celular' %}
+            <div class="form-group">
+                <label for="nombre">Nombre del Celular:</label>
+                <input type="text" id="nombre" name="nombre" value="{{ detalle_equipo['nombre'] }}">
+            </div>
             {% endif %}
-        {% endif %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="marca">Marca:</label>
+                        <input type="text" class="form-control" id="marca" name="marca"
+                            value="{{ detalle_equipo['marca'] }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="modelo">Modelo:</label>
+                        <input type="text" class="form-control" id="modelo" name="modelo"
+                            value="{{ detalle_equipo['modelo'] }}">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="serial">Serial:</label>
+                <input type="text" class="form-control" id="serial" name="serial"
+                    value="{{ detalle_equipo['serial'] }}">
+            </div>
+            {% endif %}
+            {% if tipo_equipo == 'unidad' %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="ram">RAM:</label>
+                        <input type="text" class="form-control" id="ram" name="ram"
+                            value="{{ detalle_equipo['ram'] }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="procesador">Procesador:</label>
+                        <input type="text" class="form-control" id="procesador" name="procesador"
+                            value="{{ detalle_equipo['procesador'] }}">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="almc">Almacenamiento:</label>
+                        <input type="text" class="form-control" id="almc" name="almc"
+                            value="{{ detalle_equipo['almc'] }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="perifericos">Perifericos:</label>
+                        <input type="text" class="form-control" id="perifericos" name="perifericos"
+                            value="{{ detalle_equipo['perifericos'] }}">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="numsello">Numero de Sello:</label>
+                        <input type="text" class="form-control" id="numsello" name="numsello"
+                            value="{{ detalle_equipo['numsello'] }}">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="numproducto">Numero de Producto:</label>
+                        <input type="text" class="form-control" id="numproducto" name="numproducto"
+                            value="{{ detalle_equipo['numproducto'] }}">
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="tipoimpresion">Tipo de Impresion:</label>
+                <input type="text" class="form-control" id="tipoimpresion" name="tipoimpresion"
+                    value="{{ detalle_equipo['tipoimpresion'] }}">
+            </div>
+            {% endif %}
+            <!-- Campos adicionales para celulares -->
+            {% if tipo_equipo == 'celular' %}
+            <div class="form-group">
+                <label for="imei1">IMEI 1:</label>
+                <input type="text" class="form-control" id="imei1" name="imei1"
+                    value="{{ detalle_equipo['imei1'] }}">
+            </div>
+            <div class="form-group">
+                <label for="imei2">IMEI 2:</label>
+                <input type="text" class="form-control" id="imei2" name="imei2"
+                    value="{{ detalle_equipo['imei2'] }}">
+            </div>
+            <div class="form-group">
+                <label for="SIMcard">SIMCard:</label>
+                <input type="text" class="form-control" id="SIMcard" name="SIMcard"
+                    value="{{ detalle_equipo['SIMcard'] }}">
+            </div>
+            {% endif %}
+            <div class="form-group">
+                <label for="estado_equipo">Estado del Equipo:</label>
+                <select class="form-control" id="estado_equipo" name="estado_equipo">
+                    {% for estado in estados %}
+                    <option value="{{ estado.id }}" {% if estado.id==equipo.estadoequipo_id %} selected {% endif %}>{{
+                        estado.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="observaciones">Observaciones:</label>
+                <textarea class="form-control" id="observaciones" name="observaciones"
+                    rows="3">{{ equipo.observaciones }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            <a href="{{ url_for('mostrar_equipos') }}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
 
-        <button type="submit">Guardar cambios</button>
-    </form>
-    {% else %}
-        <p>No se encontró ningún equipo con el ID proporcionado.</p>
-    {% endif %}
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>

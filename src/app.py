@@ -289,18 +289,22 @@ def editar_equipo(id):
             equipo = cursor.fetchone()
 
             if equipo:
-                equipo_dict = dict(zip((column[0] for column in cursor.description), equipo))  
+                equipo_dict = dict(zip((column[0] for column in cursor.description), equipo))
                 detalle_equipo = None
                 if equipo_dict['unidad_id'] is not None:
-                    cursor.execute("SELECT * FROM unidad WHERE id = ?", (equipo_dict['unidad_id'],))
+                    cursor.execute("SELECT equipo.*, unidad.* FROM equipo INNER JOIN unidad ON equipo.unidad_id = unidad.id WHERE equipo.id = ?", (id,))
                     detalle_equipo = cursor.fetchone()
+                    tipo_equipo = 'unidad'
                 elif equipo_dict['celular_id'] is not None:
-                    cursor.execute("SELECT * FROM celular WHERE id = ?", (equipo_dict['celular_id'],))
+                    cursor.execute("SELECT equipo.*, celular.* FROM equipo INNER JOIN celular ON equipo.celular_id = celular.id WHERE equipo.id = ?", (id,))
                     detalle_equipo = cursor.fetchone()
+                    tipo_equipo = 'celular'
+
+
 
                 estados = obtener_estados_equipo()
                 
-                return render_template('editar_equipo.html', equipo=equipo_dict, detalle_equipo=detalle_equipo, estados=estados)
+                return render_template('editar_equipo.html', equipo=equipo_dict, detalle_equipo=detalle_equipo, estados=estados, tipo_equipo=tipo_equipo)
             else:
                 flash('No se encontró ningún equipo con el ID proporcionado', 'error')
                 return redirect(url_for('mostrar_equipos'))
