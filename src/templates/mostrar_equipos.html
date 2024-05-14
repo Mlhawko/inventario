@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master de Equipos</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Listado de Equipos</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <header>
@@ -12,34 +12,38 @@
     </header>
 
     <div class="container">
-        <h1>Master de Equipos</h1>
-        <a href="{{ url_for('agregar_equipo') }}" class="btn btn-primary mb-3">Agregar Equipo</a>
-        <a href="{{ url_for('index') }}" class="btn btn-primary mb-3">Volver</a>
-    
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Tipo</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for equipo in equipos %}
-                <tr>
-                    <td>{{ equipo.id }}</td>
-                    <td>{{ equipo.nombre_notebook }}</td>
-                    <td>{{ equipo.tipo_nombre }}</td> <!-- Mostrar el nombre del tipo de equipo -->
-                    <td>
-                        
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <h1>Listado de Equipos</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <a href="{{ url_for('agregar_equipo') }}" class="btn btn-primary mb-3">Agregar Equipo</a>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Modelo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for equipo in equipos %}
+                        <tr>
+                            <td>{{ equipo.nombre_equipo }}</td>
+                            <td>{{ equipo.tipo_nombre }}</td>
+                            <td>{{ equipo.modelo }}</td>
+                            <td>
+                                <a href="{{ url_for('editar_equipo', id=equipo.id) }}" class="btn btn-primary btn-sm">Editar</a>
+                                <form action="{{ url_for('eliminar_equipo', id=equipo.id) }}" method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm ml-1" onclick="return confirm('¿Estás seguro de que deseas eliminar este equipo?')">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-    
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>

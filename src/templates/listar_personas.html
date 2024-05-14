@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestión de Inventario</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
 </head>
 
 <body>
-    <header>
-        {% include 'menu.html' %}
-    </header>
+    <header>{% include 'menu.html' %}</header>
 
     <div class="container">
         <h1>Master de Personas</h1>
@@ -20,7 +19,8 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Nombre</th>
+                            <th>Nombres</th>
+                            <th>Apellidos</th>
                             <th>Correo</th>
                             <th>Área</th>
                             <th>Acciones</th>
@@ -30,10 +30,17 @@
                         {% for persona in personas %}
                         <tr>
                             <td>{{ persona.nombres }}</td>
+                            <td>{{ persona.apellidos }}</td>
                             <td>{{ persona.correo }}</td>
                             <td>{{ persona.area_nombre }}</td>
                             <td>
-                                
+                                <div class="btn-group" role="group" aria-label="Acciones">
+                                    <a href="{{ url_for('editar_persona', id=persona.id) }}" class="btn btn-primary btn-sm">Editar</a>
+                                    <form action="{{ url_for('eliminar_persona', id=persona.id) }}" method="post">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <button type="submit" class="btn btn-danger btn-sm ml-1" onclick="return confirm('¿Estás seguro de que deseas eliminar esta persona?')">Eliminar</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -41,9 +48,11 @@
                 </table>
             </div>
         </div>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>

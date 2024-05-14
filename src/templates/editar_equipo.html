@@ -4,36 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Equipo</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-    <header>
-        {% include 'menu.html' %}
-    </header>
-    <div class="container">
-        <h1>Editar Equipo</h1>
-        <form method="POST">
-            <div class="form-group">
-                <label for="nombre_equipo">Nombre del Equipo:</label>
-                <input type="text" class="form-control" id="nombre_equipo" name="nombre_equipo" value="{{ equipo.nombre }}" required>
-            </div>
-            <div class="form-group">
-                <label for="tipo_equipo">Tipo de Equipo:</label>
-                <select class="form-select" id="tipo_equipo" name="tipo_equipo" required>
-                    {% for tipo_equipo in tipos_equipos %}
-                        <option value="{{ tipo_equipo.id }}" {% if tipo_equipo.id == equipo.tipo_id %} selected {% endif %}>{{ tipo_equipo.nombre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-            <a href="{{ url_for('mostrar_equipos') }}">
-                <button type="button" class="btn btn-primary">Volver</button>
-            </a>
-        </form>
-    </div>
+    <h1>Editar Equipo</h1>
+    
+    {% if equipo %}
+    <form action="{{ url_for('editar_equipo', id=equipo['id']) }}" method="POST" id="editar_equipo_form">
+        <label for="nombre">Nombre:</label>
+        <input type="text" id="nombre" name="nombre"><br>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <label for="marca">Marca:</label>
+        <input type="text" id="marca" name="marca" value="{{ equipo['marca'] }}"><br>
+
+        <label for="modelo">Modelo:</label>
+        <input type="text" id="modelo" name="modelo" value="{{ equipo['modelo'] }}"><br>
+
+        <label for="serial">Serial:</label>
+        <input type="text" id="serial" name="serial" value="{{ equipo['serial'] }}"><br>
+
+        <label for="estado_equipo">Estado del Equipo:</label>
+        <select id="estado_equipo" name="estado_equipo">
+            {% for estado in estados %}
+                <option value="{{ estado['id'] }}" {% if estado['id'] == equipo['estadoequipo_id'] %} selected {% endif %}>{{ estado['nombre'] }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label for="observaciones">Observaciones:</label><br>
+        <textarea id="observaciones" name="observaciones" rows="4" cols="50">{{ equipo['observaciones'] }}</textarea><br>
+        
+        {% if detalle_equipo %}
+            {% if equipo['unidad_id'] is not none %}
+                <label for="nombre_unidad">Nombre de la Unidad:</label>
+                <input type="text" id="unidad_nombre" name="unidad_nombre" value="{{ detalle_equipo['nombre_e'] }}"><br>
+            {% elif equipo['celular_id'] is not none %}
+                <label for="nombre_celular">Nombre del Celular:</label>
+                <input type="text" id="celular_nombre" name="celular_nombre" value="{{ detalle_equipo['nombre'] }}"><br>
+            {% endif %}
+        {% endif %}
+
+        <button type="submit">Guardar cambios</button>
+    </form>
+    {% else %}
+        <p>No se encontró ningún equipo con el ID proporcionado.</p>
+    {% endif %}
 </body>
 </html>
