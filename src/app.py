@@ -40,7 +40,7 @@ def obtener_tipos_equipos():
 def index():
     try:
         cursor = conexion.cursor()
-        cursor.execute('''SELECT persona.id, persona.nombres, persona.correo, area.nombre AS area_nombre
+        cursor.execute('''SELECT persona.id, persona.nombres, persona.apellidos, persona.correo, persona.rut, persona.dv, area.nombre AS area_nombre
                   FROM persona
                   INNER JOIN area ON persona.area_id = area.id ''')
 
@@ -414,9 +414,6 @@ def eliminar_equipo(id):
     
     return redirect(url_for('mostrar_equipos'))
 
-
-
-
 #--------------------------------------------------
 # Obtener estados
 def obtener_estados_equipo():
@@ -429,8 +426,6 @@ def obtener_estados_equipo():
     except pyodbc.Error as ex:
         print(ex)
         return None
-
-
 #---------------------------------------------------
 #CRUD Area
 # Función para listar todas las áreas y permitir la edición en la misma página
@@ -548,7 +543,6 @@ def crud_tipos_equipos():
 
     return render_template('crud_tipos_equipos.html', tipos_equipos=tipos_equipos)
 
-
 #--------------------------------------------------------------------------------
 # Obtener areas
 def obtener_areas():
@@ -563,18 +557,7 @@ def obtener_areas():
         return None
 #----------------------------------
 # Mostrar equipos disponibles
-@app.route('/equipos/disponibles')
-def mostrar_equipos_disponibles():
-    try:
-        cursor = conexion.cursor()
-        cursor.execute("SELECT id, nombre FROM Equipo WHERE estado_id = 1")
-        equipos = cursor.fetchall()
-        cursor.close()
-        return render_template('equipos_disponibles.html', equipos=equipos)
-    except pyodbc.Error as ex:
-        print(f'Error al obtener los equipos disponibles: {ex}')
-        flash('Error al obtener los equipos disponibles', 'error')
-        return redirect(url_for('index'))
+
 
 #----------------------------------------------------------
 #Asignar equipo

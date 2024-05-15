@@ -23,7 +23,9 @@
                     <thead>
                         <tr>
                             <th>Reporte</th>
+                            <th>Rut</th>
                             <th>Nombre</th>
+                            <th>Apellido</th>
                             <th>Correo</th>
                             <th>Área</th>
                             <th>Acciones</th>
@@ -34,7 +36,9 @@
                         {% for persona in personas %}
                         <tr>
                             <td><button type="button" class="btn btn-secondary">Reporte</button></td>
+                            <td>{{ persona.rut }}-{{ persona.dv }}</td>
                             <td>{{ persona.nombres }}</td>
+                            <td>{{ persona.apellidos }}</td>
                             <td>{{ persona.correo }}</td>
                             <td>{{ persona.area_nombre }}</td>
                             <td>
