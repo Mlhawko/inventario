@@ -4,39 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asignar Equipo</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <header>
         {% include 'menu.html' %}
     </header>
 
-    <div class="container mt-5">
-        <h2 class="mb-4">Asignar Equipo</h2>
-        <form action="{{ url_for('asignar_equipo', equipo_id=equipo_id) }}" method="POST" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="persona_id">Persona:</label>
-                <select class="form-select" id="persona_id" name="persona_id" required>
-                    {% for persona in personas %}
-                        <option value="{{ persona.id }}">{{ persona.nombres }}</option>
-                    {% endfor %}
-                </select>
+    <div class="container">
+        <h1>Asignar Equipo</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <form action="{{ url_for('asignar_equipo') }}" method="POST">
+                    <div class="form-group">
+                        <label for="persona">Seleccionar Persona:</label>
+                        <select class="form-control" id="persona" name="persona_id">
+                            {% for persona in personas %}
+                            <option value="{{ persona.id }}">{{ persona.nombres }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="equipo">Seleccionar Equipo:</label>
+                        <select class="form-control" id="equipo" name="equipo_id">
+                            {% for equipo in equipos %}
+                            <option value="{{ equipo.id }}">{{ equipo.nombre_equipo }} ({{ equipo.tipo_nombre }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="observaciones">Observaciones:</label>
+                        <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Asignar Equipo</button>
+                </form>
             </div>
-            <div class="form-group">
-                <label for="estado_equipo_id">Estado del Equipo:</label>
-                <select class="form-select" id="estado_equipo_id" name="estado_equipo_id" required>
-                    {% for estado in estados_equipo %}
-                        <option value="{{ estado.id }}">{{ estado.nombre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="fecha_asignacion">Fecha de Asignación:</label>
-                <input type="date" class="form-control" id="fecha_asignacion" name="fecha_asignacion" required>
-            </div>
-            
-            <button type="submit" class="btn btn-primary">Asignar Equipo</button>
-        </form>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

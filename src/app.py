@@ -1,7 +1,7 @@
 
 import pyodbc
 from flask import Flask, flash, redirect, render_template, request, url_for
-import datetime
+from datetime import datetime
 
 
 app = Flask(__name__)
@@ -562,46 +562,62 @@ def obtener_areas():
 #----------------------------------------------------------
 #Asignar equipo
 
-@app.route('/asignar_equipo/<int:equipo_id>', methods=['GET', 'POST'])
-def asignar_equipo(equipo_id):
+@app.route('/asignar_equipo', methods=['GET', 'POST'])
+def asignar_equipo():
+    cursor = conexion.cursor()
+
     if request.method == 'POST':
+        equipo_id = request.form['equipo_id']
         persona_id = request.form['persona_id']
-        fecha_asignacion = request.form['fecha_asignacion']
-        estado_equipo_id = request.form['estado_equipo_id']
+        fecha_asignacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        observaciones = request.form['observaciones']
 
         try:
-            cursor = conexion.cursor()
-            cursor.execute("INSERT INTO Movimiento (equipo_id, persona_id, estado_id, tipo_mov, fecha_mov) VALUES (?, ?, ?, ?, ?)",
-                           (equipo_id, persona_id, estado_equipo_id, 'Asignación', fecha_asignacion))
-            
-            cursor.execute("UPDATE Equipo SET persona_id = ?, id_estado = ? WHERE id = ?", (persona_id, estado_equipo_id, equipo_id))
-            
+            cursor.execute("INSERT INTO asignacion_equipo (equipo_id, persona_id, fecha_asignacion, observaciones) VALUES (?, ?, ?, ?)",
+                           (equipo_id, persona_id, fecha_asignacion, observaciones))
             conexion.commit()
-            cursor.close()
+            cursor.execute("UPDATE equipo SET estadoequipo_id = 2 WHERE id = ?", (equipo_id,))
+            conexion.commit()
+
             flash('Equipo asignado correctamente', 'success')
-            return redirect(url_for('mostrar_equipos_disponibles'))
+            return redirect(url_for('index'))
         except pyodbc.Error as ex:
             print(f'Error al asignar el equipo: {ex}')
             flash('Error al asignar el equipo', 'error')
-            return redirect(url_for('mostrar_equipos_disponibles'))
+            return redirect(url_for('index'))
+        finally:
+            cursor.close()
+
     else:
         try:
-            cursor = conexion.cursor()
-            cursor.execute("SELECT nombre FROM equipo WHERE id = ?", (equipo_id,))
-            equipo = cursor.fetchone()
+            cursor.execute("""
+                SELECT
+                equipo.id,
+                tipoequipo.nombre AS tipo_nombre,
+                COALESCE(unidad.nombre_e, celular.nombre) AS nombre_equipo
+                FROM equipo
+                LEFT JOIN tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
+                LEFT JOIN unidad ON equipo.unidad_id = unidad.id
+                LEFT JOIN celular ON equipo.celular_id = celular.id
+                WHERE equipo.estadoequipo_id = 1
+            """)
+            equipos = cursor.fetchall()
 
-            cursor.execute("SELECT id, nombres FROM persona")  # Obtener lista de personas
+            cursor.execute("SELECT id, nombres FROM persona")
             personas = cursor.fetchall()
 
-            cursor.execute("SELECT id, nombre FROM estadoequipo")  # Obtener lista de estados de equipo
-            estados_equipo = cursor.fetchall()
-
-            cursor.close()
-            return render_template('asignar_equipo.html', equipo_id=equipo_id, equipo=equipo, personas=personas, estados_equipo=estados_equipo)
-        except Exception as ex:
-            print(f'Error al obtener equipo: {ex}')
+            return render_template('asignar_equipo.html', personas=personas, equipos=equipos)
+        except pyodbc.Error as ex:
+            print(f'Error al obtener los datos: {ex}')
             flash('Error al cargar la página de asignación', 'error')
-            return redirect(url_for('mostrar_equipos_disponibles'))
+            return redirect(url_for('index'))
+        finally:
+            cursor.close()  # Cerrar el cursor en cualquier caso
+
+
+
+
+
 #---------------------------------------------------------------------------
 #Detalle persona
 @app.route('/detalle_persona/<int:persona_id>')
