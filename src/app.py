@@ -1,12 +1,16 @@
 
+import os
 import pyodbc
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import Flask, flash, redirect, render_template, request, url_for, send_from_directory
 from datetime import datetime
+from werkzeug.utils import secure_filename
+
 
 
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'chf24'
+#---------------------------------------------------------
 
 server = 'CHFNB239\\SQLEXPRESS'
 db = 'TestDB'
@@ -22,7 +26,8 @@ except pyodbc.Error as ex:
     sqlstate = ex.args[0]
     print(sqlstate)
     print ('Error al intentar conectarse')
-#---------------------------------------------------------
+
+
 
 def obtener_tipos_equipos():
     try:
@@ -38,17 +43,71 @@ def obtener_tipos_equipos():
 # Index mostrar personas
 @app.route('/')
 def index():
+    cursor = conexion.cursor()
     try:
-        cursor = conexion.cursor()
-        cursor.execute('''SELECT persona.id, persona.nombres, persona.apellidos, persona.correo, persona.rut, persona.dv, area.nombre AS area_nombre
-                  FROM persona
-                  INNER JOIN area ON persona.area_id = area.id ''')
+        cursor.execute('''
+            SELECT DISTINCT 
+    persona.id, 
+    persona.nombres, 
+    persona.apellidos, 
+    persona.correo, 
+    persona.rut, 
+    persona.dv, 
+    area.nombre AS area_nombre,
+    ISNULL(unidad.nombre_e, '') AS nombre_unidad, 
+    ISNULL(celular.nombre, '') AS nombre_celular, 
+    equipo.id AS equipo_id
+FROM 
+    persona
+INNER JOIN 
+    area ON persona.area_id = area.id
+LEFT JOIN 
+    asignacion_equipo ON persona.id = asignacion_equipo.persona_id
+LEFT JOIN 
+    equipo ON asignacion_equipo.equipo_id = equipo.id
+LEFT JOIN 
+    unidad ON equipo.unidad_id = unidad.id
+LEFT JOIN 
+    celular ON equipo.celular_id = celular.id
+WHERE 
+    equipo.estadoequipo_id = 2
 
-        personas = cursor.fetchall()
+        ''')
+
+        rows = cursor.fetchall()
         cursor.close()
-        return render_template('index.html', personas=personas)
+
+        # Organize data in a dictionary
+        personas = {}
+        for row in rows:
+            persona_id = row.id
+            if persona_id not in personas:
+                personas[persona_id] = {
+                    'id': row.id,
+                    'nombres': row.nombres,
+                    'apellidos': row.apellidos,
+                    'correo': row.correo,
+                    'rut': row.rut,
+                    'dv': row.dv,
+                    'area_nombre': row.area_nombre,
+                    'equipos_asignados': []
+                }
+            equipo = {
+                'equipo_id': row.equipo_id,
+                'nombre': row.nombre_unidad if row.nombre_unidad else row.nombre_celular
+            }
+            if equipo['nombre']:  
+                personas[persona_id]['equipos_asignados'].append(equipo)
+
+        return render_template('index.html', personas=list(personas.values()))
     except pyodbc.Error as ex:
-        print(ex)
+        print(f'Error al obtener los datos: {ex}')
+        flash('Error al cargar la página de asignación', 'error')
+        return redirect(url_for('index'))
+
+
+
+
 #--------------------------------------------------------
 # CRUD Persona
 @app.route('/listar_personas')
@@ -571,30 +630,42 @@ def asignar_equipo():
         persona_id = request.form['persona_id']
         fecha_asignacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         observaciones = request.form['observaciones']
+        archivo_pdf = request.files['archivo_pdf']
 
-        try:
-            cursor.execute("INSERT INTO asignacion_equipo (equipo_id, persona_id, fecha_asignacion, observaciones) VALUES (?, ?, ?, ?)",
-                           (equipo_id, persona_id, fecha_asignacion, observaciones))
-            conexion.commit()
-            cursor.execute("UPDATE equipo SET estadoequipo_id = 2 WHERE id = ?", (equipo_id,))
-            conexion.commit()
+        if archivo_pdf and archivo_pdf.filename.endswith('.pdf'):
+            filename = f"{persona_id}_{equipo_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            archivo_pdf.save(filepath)
 
-            flash('Equipo asignado correctamente', 'success')
-            return redirect(url_for('index'))
-        except pyodbc.Error as ex:
-            print(f'Error al asignar el equipo: {ex}')
-            flash('Error al asignar el equipo', 'error')
-            return redirect(url_for('index'))
-        finally:
-            cursor.close()
+            try:
+                cursor.execute("""
+                    INSERT INTO asignacion_equipo (equipo_id, persona_id, fecha_asignacion, observaciones, archivo_pdf)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (equipo_id, persona_id, fecha_asignacion, observaciones, filename))
+                conexion.commit()
+
+                cursor.execute("UPDATE equipo SET estadoequipo_id = 2 WHERE id = ?", (equipo_id,))
+                conexion.commit()
+
+                flash('Equipo asignado correctamente', 'success')
+                return redirect(url_for('index'))
+            except pyodbc.Error as ex:
+                print(f'Error al asignar el equipo: {ex}')
+                flash('Error al asignar el equipo', 'error')
+                return redirect(url_for('index'))
+            finally:
+                cursor.close()
+        else:
+            flash('El archivo debe ser un PDF', 'error')
+            return redirect(url_for('asignar_equipo'))
 
     else:
         try:
             cursor.execute("""
                 SELECT
-                equipo.id,
-                tipoequipo.nombre AS tipo_nombre,
-                COALESCE(unidad.nombre_e, celular.nombre) AS nombre_equipo
+                    equipo.id,
+                    tipoequipo.nombre AS tipo_nombre,
+                    COALESCE(unidad.nombre_e, celular.nombre) AS nombre_equipo
                 FROM equipo
                 LEFT JOIN tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
                 LEFT JOIN unidad ON equipo.unidad_id = unidad.id
@@ -612,9 +683,85 @@ def asignar_equipo():
             flash('Error al cargar la página de asignación', 'error')
             return redirect(url_for('index'))
         finally:
-            cursor.close()  # Cerrar el cursor en cualquier caso
+            cursor.close()
+#--------------------------------------------------------------------------
+# devolucion:
+@app.route('/devolver_equipo/<int:equipo_id>', methods=['GET', 'POST'])
+def devolver_equipo(equipo_id):
+    cursor = conexion.cursor()
 
+    if request.method == 'POST':
+        if 'archivo_pdf' not in request.files:
+            flash('No se ha seleccionado ningún archivo', 'error')
+            return redirect(request.url)
 
+        file = request.files['archivo_pdf']
+
+        if file.filename == '':
+            flash('No se ha seleccionado ningún archivo', 'error')
+            return redirect(request.url)
+
+        if file and allowed_file(file.filename):
+            filename = f"{equipo_id}_devolucion_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+            fecha_devolucion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            observaciones = request.form['observaciones']
+
+            try:
+                cursor.execute("""
+                    UPDATE asignacion_equipo
+                    SET fecha_devolucion = ?, observaciones = ?, archivo_pdf_devolucion = ?
+                    WHERE equipo_id = ? AND fecha_devolucion IS NULL
+                """, (fecha_devolucion, observaciones, filename, equipo_id))
+                conexion.commit()
+
+                cursor.execute("UPDATE equipo SET estadoequipo_id = 1 WHERE id = ?", (equipo_id,))
+                conexion.commit()
+
+                flash('Equipo devuelto correctamente', 'success')
+                return redirect(url_for('index'))
+            except pyodbc.Error as ex:
+                print(f'Error al devolver el equipo: {ex}')
+                flash('Error al devolver el equipo', 'error')
+                return redirect(url_for('devolver_equipo', equipo_id=equipo_id))
+            finally:
+                cursor.close()
+
+    else:
+        try:
+            cursor.execute("""
+                SELECT
+                    ae.id,
+                    e.id AS equipo_id,
+                    te.nombre AS tipo_nombre,
+                    COALESCE(u.nombre_e, c.nombre) AS nombre_equipo,
+                    p.nombres,
+                    ae.fecha_asignacion,
+                    ae.fecha_devolucion,
+                    ae.observaciones,
+                    ae.archivo_pdf_devolucion
+                FROM asignacion_equipo AS ae
+                JOIN equipo AS e ON ae.equipo_id = e.id
+                JOIN tipoequipo AS te ON e.tipoequipo_id = te.id
+                LEFT JOIN unidad AS u ON e.unidad_id = u.id
+                LEFT JOIN celular AS c ON e.celular_id = c.id
+                JOIN persona AS p ON ae.persona_id = p.id
+                WHERE ae.fecha_devolucion IS NULL AND ae.equipo_id = ?
+            """, (equipo_id,))
+            asignacion = cursor.fetchone()
+
+            if not asignacion:
+                flash('No se encontró una asignación activa para este equipo', 'error')
+                return redirect(url_for('index'))
+
+            return render_template('devolver_equipo.html', asignacion=asignacion)
+        except pyodbc.Error as ex:
+            print(f'Error al obtener los datos: {ex}')
+            flash('Error al cargar la página de devolución', 'error')
+            return redirect(url_for('index'))
+        finally:
+            cursor.close()
 
 
 
@@ -642,32 +789,133 @@ def detalle_persona(persona_id):
         return redirect(url_for('index'))
 #----------------------------------------------------
 # Detalle equipo
-@app.route('/detalle_equipo/<int:equipo_id>/<int:tipo_equipo_id>')
-def detalle_equipo(equipo_id, tipo_equipo_id):
+
+@app.route('/detalle_equipo/<int:equipo_id>')
+def detalle_equipo(equipo_id):
     try:
         cursor = conexion.cursor()
 
-        # Obtener información básica del equipo
-        cursor.execute("SELECT equipo.*, tipoequipo.nombre AS tipo_equipo FROM equipo INNER JOIN tipoequipo ON equipo.tipoequipo_id=tipo_equipo_id WHERE equipo.id = ?", (equipo_id,))
-        equipo = cursor.fetchone()
+        # Obtener detalles del equipo
+        cursor.execute("""
+            SELECT
+                equipo.id,
+                estadoequipo.nombre AS estado_nombre,
+                equipo.fcreacion AS fecha_creacion,
+                equipo.observaciones,
+                equipo.unidad_id,
+                unidad.nombre_e,
+                unidad.marca,
+                unidad.modelo,
+                unidad.ram,
+                unidad.procesador,
+                unidad.almc,
+                unidad.perif,
+                unidad.numsello,
+                unidad.serial,
+                unidad.numproducto,
+                unidad.tipoimpresion,
+                equipo.celular_id,
+                celular.nombre AS nombre_celular,
+                celular.marca AS marca_celular,
+                celular.modelo AS modelo_celular,
+                celular.serial AS serial_celular,
+                celular.imei1,
+                celular.imei2,
+                celular.SIMcard
+            FROM equipo
+            LEFT JOIN estadoequipo ON equipo.estadoequipo_id = estadoequipo.id
+            LEFT JOIN unidad ON equipo.unidad_id = unidad.id
+            LEFT JOIN celular ON equipo.celular_id = celular.id
+            WHERE equipo.id = ?
+        """, (equipo_id,))
+        equipo_detalle = cursor.fetchone()
 
-        if tipo_equipo_id == 1:  # tipo 1 es para notebook
-            cursor.execute("SELECT * FROM Notebook WHERE id = ?", (equipo_id,))
-            tipo_equipo = cursor.fetchone()
-        elif tipo_equipo_id == 2:  # tipo 2 es para celular
-            cursor.execute("SELECT * FROM Celular WHERE id = ?", (equipo_id,))
-            tipo_equipo = cursor.fetchone()
+        if not equipo_detalle:
+            flash('No se encontró el equipo', 'error')
+            return redirect(url_for('index'))
+
+        # Obtener historial de asignaciones y devoluciones
+        cursor.execute("""
+            SELECT
+                asignacion_equipo.fecha_asignacion,
+                asignacion_equipo.fecha_devolucion,
+                asignacion_equipo.observaciones,
+                asignacion_equipo.archivo_pdf,
+                asignacion_equipo.archivo_pdf_devolucion,
+                persona.nombres AS persona_nombre,
+                persona.apellidos AS persona_apellidos
+            FROM asignacion_equipo
+            JOIN persona ON asignacion_equipo.persona_id = persona.id
+            WHERE asignacion_equipo.equipo_id = ?
+            ORDER BY asignacion_equipo.fecha_asignacion DESC
+        """, (equipo_id,))
+        historial = cursor.fetchall()
 
         cursor.close()
 
-        return render_template('detalle_equipo.html', equipo=equipo, tipo_equipo=tipo_equipo)
+        return render_template('detalle_equipo.html', equipo=[equipo_detalle], historial=historial)
+    
     except pyodbc.Error as ex:
         print(f'Error al obtener los detalles del equipo: {ex}')
         flash('Error al obtener los detalles del equipo', 'error')
         return redirect(url_for('index'))
+#-----------------------------------------------------------------------
+@app.route('/equipos')
+def lista_equipos():
+    try:
+        cursor = conexion.cursor()
+
+        cursor.execute("""
+            SELECT
+                equipo.id,
+                tipoequipo.nombre AS tipo_equipo_nombre,
+                COALESCE(unidad.nombre_e, celular.nombre) AS nombre_equipo,
+                estadoequipo.nombre AS estado_nombre,
+                equipo.observaciones
+            FROM equipo
+            LEFT JOIN tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
+            LEFT JOIN estadoequipo ON equipo.estadoequipo_id = estadoequipo.id
+            LEFT JOIN unidad ON equipo.unidad_id = unidad.id
+            LEFT JOIN celular ON equipo.celular_id = celular.id
+        """)
+        equipos = cursor.fetchall()
+        cursor.close()
+
+        return render_template('lista_equipos.html', equipos=equipos)
+    
+    except pyodbc.Error as ex:
+        print(f'Error al obtener la lista de equipos: {ex}')
+        flash('Error al obtener la lista de equipos', 'error')
+        return redirect(url_for('index'))
 
 
 
+
+#-----------------------------------------------------------------------
+#descargar:
+UPLOAD_FOLDER = 'C:/descarga/'
+ALLOWED_EXTENSIONS = {'pdf'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and \
+          filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/descargar_pdf/<pdf_filename>')
+def descargar_pdf(pdf_filename):
+    try:
+        return send_from_directory(app.config['UPLOAD_FOLDER'], pdf_filename, as_attachment=True)
+    except FileNotFoundError:
+        flash('El archivo PDF no se encontró', 'error')
+        return redirect(url_for('index'))
+
+
+
+
+
+###############################
+###############################
+###############################
 
 if __name__ == '__main__':
     app.run(debug=True)

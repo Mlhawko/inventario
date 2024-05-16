@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devolver Equipo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        {% include 'menu.html' %}
+    </header>
+
+    <div class="container">
+        <h1>Devolver Equipo</h1>
+        <form method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="equipo">Equipo</label>
+                <input type="text" class="form-control" id="equipo" value="{{ asignacion.tipo_nombre }} - {{ asignacion.nombre_equipo }}" readonly>
+            </div>
+            <div class="form-group">
+                <label for="persona">Persona Asignada</label>
+                <input type="text" class="form-control" id="persona" value="{{ asignacion.nombres }}" readonly>
+            </div>
+            <div class="form-group">
+                <label for="fecha_asignacion">Fecha de Asignación</label>
+                <input type="text" class="form-control" id="fecha_asignacion" value="{{ asignacion.fecha_asignacion }}" readonly>
+            </div>
+            <div class="form-group">
+                <label for="observaciones">Observaciones</label>
+                <textarea class="form-control" id="observaciones" name="observaciones" rows="3">{{ asignacion.observaciones }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="archivo_pdf">Subir PDF</label>
+                <input type="file" class="form-control-file" id="archivo_pdf" name="archivo_pdf">
+            </div>
+            <button type="submit" class="btn btn-primary">Devolver Equipo</button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

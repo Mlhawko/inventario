@@ -3,30 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle de Equipo</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Detalle del Equipo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <header>
         {% include 'menu.html' %}
     </header>
 
-    <div class="container mt-5">
-        <h2 class="mb-4">Detalle de Equipo</h2>
-        <h3>{{ equipo.nombre }}</h3>
-        <p>Tipo: {{ equipo.tipo_equipo }}</p>
+    <div class="container">
+        <h1>Detalle del Equipo</h1>
+        <div class="row">
+            <div class="col-md-12">
+                <table class="table">
+                    <tr>
+                        <th>ID</th>
+                        <td>{{ equipo[0].id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Estado</th>
+                        <td>{{ equipo[0].estado_nombre }}</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha de Creación</th>
+                        <td>{{ equipo[0].fecha_creacion }}</td>
+                    </tr>
+                    <tr>
+                        <th>Observaciones</th>
+                        <td>{{ equipo[0].observaciones }}</td>
+                    </tr>
+                    {% if equipo[0].unidad_id %}
+                    <tr>
+                        <th>Unidad - Nombre</th>
+                        <td>{{ equipo[0].nombre_e }}</td>
+                    </tr>
+                    <tr>
+                        <th>Unidad - Marca</th>
+                        <td>{{ equipo[0].marca }}</td>
+                    </tr>
+                    <tr>
+                        <th>Unidad - Modelo</th>
+                        <td>{{ equipo[0].modelo }}</td>
+                    </tr>
+                    <tr>
+                        <th>Unidad - RAM</th>
+                        <td>{{ equipo[0].ram }}</td>
+                    </tr>
+                    <tr>
+                        <th>Unidad - Procesador</th>
+                        <td>{{ equipo[0].procesador }}</td>
+                    </tr>
+                    <tr>
+                        <th>Unidad - Almacenamiento</th>
+                        <td>{{ equipo[0].almc }}</td>
+                    </tr>
+                    <tr>
+                        <th>Unidad - Periféricos</th>
+                        <td>{{ equipo[0].perif }}</td>
+                    </tr>
+                    <tr>
+                        <th>Unidad - Número de Sello</th>
+                        <td>{{ equipo[0].numsello }}</td>
+                    </tr>
+                    <tr>
+                        <th>Unidad - Serial</th>
+                        <td>{{ equipo[0].serial }}</td>
+                    </tr>
+                    <tr>
+                        <th>Unidad - Número de Producto</th>
+                        <td>{{ equipo[0].numproducto }}</td>
+                    </tr>
+                    <tr>
+                        <th>Unidad - Tipo de Impresión</th>
+                        <td>{{ equipo[0].tipoimpresion }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if equipo[0].celular_id %}
+                    <tr>
+                        <th>Celular - Nombre</th>
+                        <td>{{ equipo[0].nombre_celular }}</td>
+                    </tr>
+                    <tr>
+                        <th>Celular - Marca</th>
+                        <td>{{ equipo[0].marca_celular }}</td>
+                    </tr>
+                    <tr>
+                        <th>Celular - Modelo</th>
+                        <td>{{ equipo[0].modelo_celular }}</td>
+                    </tr>
+                    <tr>
+                        <th>Celular - Serial</th>
+                        <td>{{ equipo[0].serial_celular }}</td>
+                    </tr>
+                    <tr>
+                        <th>Celular - IMEI 1</th>
+                        <td>{{ equipo[0].imei1 }}</td>
+                    </tr>
+                    <tr>
+                        <th>Celular - IMEI 2</th>
+                        <td>{{ equipo[0].imei2 }}</td>
+                    </tr>
+                    <tr>
+                        <th>Celular - SIM Card</th>
+                        <td>{{ equipo[0].SIMcard }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
 
-        
-            {% if tipo_equipo_id == 1 %}
-                <h4>Detalles de Notebook</h4>
-                <p>Memoria RAM: {{ Notebook.memoria_ram }}</p>
-                <p>Capacidad de Disco: {{ Notebook.capacidad_disco }}</p>
-            {% elif tipo_equipo_id == 2 %}
-                <h4>Detalles de Celular</h4>
-                <p>Modelo: {{ Celular.modelo }}</p>
-                <p>Sistema Operativo: {{ Celular.sistema_operativo }}</p>
-            {% endif %}
-        
+                <h2>Historial de Asignaciones y Devoluciones</h2>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Persona</th>
+                            <th>Fecha de Asignación</th>
+                            <th>Fecha de Devolución</th>
+                            <th>Observaciones</th>
+                            <th>PDF Asignación</th>
+                            <th>PDF Devolución</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in historial %}
+                        <tr>
+                            <td>{{ entry.persona_nombre }} {{ entry.persona_apellidos }}</td>
+                            <td>{{ entry.fecha_asignacion }}</td>
+                            <td>{{ entry.fecha_devolucion }}</td>
+                            <td>{{ entry.observaciones }}</td>
+                            <td>
+                                {% if entry.archivo_pdf %}
+                                <a href="{{ url_for('descargar_pdf', pdf_filename=entry.archivo_pdf) }}" class="btn btn-primary">Descargar</a>
+                                {% else %}
+                                No disponible
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if entry.archivo_pdf_devolucion %}
+                                <a href="{{ url_for('descargar_pdf', pdf_filename=entry.archivo_pdf_devolucion) }}" class="btn btn-primary">Descargar</a>
+                                {% else %}
+                                No disponible
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <a href="{{ url_for('index') }}" class="btn btn-primary">Volver</a>
+            </div>
+        </div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

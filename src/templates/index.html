@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="styles.css" /> <!-- Enlazar el archivo CSS común -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 </head>
-
 <body>
     <header>
         {% include 'menu.html' %}
@@ -16,13 +15,15 @@
     <div class="container">
         <h1>Lista de Personas</h1>
         <div class="row">
-            <div class="col-md-7">
-                <a href="{{ url_for('asignar_equipo') }}" class="btn btn-primary">Asignar equipo</a>
+            <div class="col-md-12">
+                <a href="{{ url_for('asignar_equipo') }}" class="btn btn-primary mb-3">Asignar equipo</a>
+                <a href="{{ url_for('lista_equipos') }}" class="btn btn-primary mb-3">Equipos</a>
+
 
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Reporte</th>
+                            
                             <th>Rut</th>
                             <th>Nombre</th>
                             <th>Apellido</th>
@@ -32,17 +33,30 @@
                         </tr>
                     </thead>
                     <tbody>
-                        
                         {% for persona in personas %}
                         <tr>
-                            <td><button type="button" class="btn btn-secondary">Reporte</button></td>
+                            
                             <td>{{ persona.rut }}-{{ persona.dv }}</td>
                             <td>{{ persona.nombres }}</td>
                             <td>{{ persona.apellidos }}</td>
                             <td>{{ persona.correo }}</td>
                             <td>{{ persona.area_nombre }}</td>
                             <td>
-                                <a href="{{ url_for('detalle_persona', persona_id=persona.id) }}" class="btn btn-info">Detalle</a>
+                                <button type="button" class="btn btn-secondary detalle-btn" data-target="detalle-{{ persona.id }}">Detalle</button>
+                            </td>
+                        </tr>
+                        <tr id="detalle-{{ persona.id }}" class="detalle-container" style="display: none;">
+                            <td colspan="7">
+                                <div class="equipos-container">
+                                    <ul>
+                                        {% for equipo in persona.equipos_asignados %}
+                                        <li>
+                                            <a href="{{ url_for('detalle_equipo', equipo_id=equipo.equipo_id) }}">{{ equipo.nombre }}</a>
+                                            <a href="{{ url_for('devolver_equipo', equipo_id=equipo.equipo_id) }}" class="btn btn-secondary">Devolver</a>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -50,9 +64,18 @@
                 </table>
             </div>
         </div>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.detalle-btn').click(function() {
+                var targetId = $(this).data('target');
+                $('#' + targetId).toggle();
+            });
+        });
+    </script>
 </body>
 </html>
