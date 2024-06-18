@@ -212,7 +212,7 @@ def index():
                 tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
 
             WHERE
-                equipo.estadoequipo_id = 2 AND asignacion_equipo.fecha_devolucion IS NULL
+                asignacion_equipo.fecha_devolucion IS NULL
                     AND (
                                 persona.nombres LIKE ? OR
                                 persona.apellidos LIKE ? OR
@@ -1335,42 +1335,96 @@ def fetch_data(equipo_id):
     return equipo_detalle
 
 
-@app.route('/generate_pdf/<int:persona_id>', methods=['POST'])
-@login_required
-def generate_pdf(persona_id):
-    print(f"Recibido persona_id: {persona_id}")
-    print(f"Datos recibidos: {request.form}")
 
-    # Consultar la información de la persona en la base de datos
-    cursor = conexion.cursor()
-    cursor.execute("SELECT nombres, apellidos FROM persona WHERE id = ?", (persona_id,))
-    persona = cursor.fetchone()
-    cursor.close()
-
-    if not persona:
-        return "Persona no encontrada", 404
-
-    nombres = persona[0]
-    apellidos = persona[1]
-
-    # Crear el PDF
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(0, 10, 'Acta de Entrega de Equipos', 0, 1, 'C')
-    pdf.set_font('Arial', '', 12)
-    pdf.cell(0, 10, f'Persona: {nombres} {apellidos}', 0, 1)
-    pdf.cell(0, 10, 'Equipos: No se incluyeron equipos en esta prueba', 0, 1)
-
-    # Guardar el PDF en un objeto BytesIO
-    pdf_output = io.BytesIO()
-    pdf.output(pdf_output)
-    pdf_output.seek(0)
-
-    # Devolver el archivo PDF como respuesta para descargar
-    return send_file(pdf_output, download_name='acta_entrega.pdf', as_attachment=True)
 
 #-------------------------------------
+@app.route('/exportar_equipos_pdf', methods=['GET'])
+@login_required
+def exportar_equipos_pdf():
+    try:
+        buscar = request.args.get('buscar', '')
+        tipo_equipo = request.args.get('tipo_equipo', '')
+        estado = request.args.get('estado', '')
+
+        # Crear la consulta SQL con los filtros aplicados
+        query = """
+            SELECT
+                equipo.id,
+                tipoequipo.nombre AS tipo_equipo_nombre,
+                COALESCE(unidad.nombre_e, celular.nombre) AS nombre_equipo,
+                estadoequipo.nombre AS estado_nombre,
+                equipo.observaciones
+            FROM equipo
+            LEFT JOIN tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
+            LEFT JOIN estadoequipo ON equipo.estadoequipo_id = estadoequipo.id
+            LEFT JOIN unidad ON equipo.unidad_id = unidad.id
+            LEFT JOIN celular ON equipo.celular_id = celular.id
+            WHERE 1=1
+        """
+        
+        params = []
+        
+        if buscar:
+            query += " AND (unidad.nombre_e LIKE ? OR celular.nombre LIKE ?)"
+            params.append(f'%{buscar}%')
+            params.append(f'%{buscar}%')
+        
+        if tipo_equipo:
+            query += " AND equipo.tipoequipo_id = ?"
+            params.append(tipo_equipo)
+        
+        if estado:
+            query += " AND equipo.estadoequipo_id = ?"
+            params.append(estado)
+        
+        cursor = conexion.cursor()
+        cursor.execute(query, params)
+        equipos = cursor.fetchall()
+        cursor.close()
+
+        # Crear un buffer de memoria para almacenar el PDF
+        buffer = io.BytesIO()
+
+        # Crear un documento PDF
+        pdf = SimpleDocTemplate(buffer, pagesize=letter)
+        elements = []
+
+        # Datos para la tabla PDF
+        data = [['ID', 'Tipo de Equipo', 'Nombre', 'Estado', 'Observaciones']]
+
+        # Recorrer las filas seleccionadas y agregar los datos a la tabla
+        for equipo in equipos:
+            data.append([equipo.id, equipo.tipo_equipo_nombre, equipo.nombre_equipo, equipo.estado_nombre, equipo.observaciones])
+
+        # Crear la tabla PDF
+        table = Table(data)
+
+        # Estilo de la tabla
+        style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                            ('GRID', (0, 0), (-1, -1), 1, colors.black)])
+
+        table.setStyle(style)
+        elements.append(table)
+
+        # Construir el PDF
+        pdf.build(elements)
+
+        # Devolver el PDF como una respuesta
+        buffer.seek(0)
+        response = make_response(buffer.getvalue())
+        response.headers['Content-Disposition'] = 'attachment; filename=equipos.pdf'
+        response.headers['Content-Type'] = 'application/pdf'
+
+        return response
+    except Exception as ex:
+        print('Error al exportar a PDF:', ex)
+        flash('Error al exportar a PDF', 'error')
+        return redirect(url_for('lista_equipos'))
 
 
 #---------------------------------------
@@ -1500,6 +1554,87 @@ def exportar_excel():
         print('Error al exportar a Excel:', ex)
         flash('Error al exportar a Excel', 'error')
         return redirect(url_for('index'))
+
+#----
+@app.route('/exportar_equipos_excel', methods=['GET'])
+@login_required
+def exportar_equipos_excel():
+    try:
+        buscar = request.args.get('buscar', '')
+        tipo_equipo = request.args.get('tipo_equipo', '')
+        estado = request.args.get('estado', '')
+
+        # Crear la consulta SQL con los parámetros de búsqueda
+        query = """
+            SELECT
+                equipo.id,
+                tipoequipo.nombre AS tipo_equipo_nombre,
+                COALESCE(unidad.nombre_e, celular.nombre) AS nombre_equipo,
+                estadoequipo.nombre AS estado_nombre,
+                equipo.observaciones
+            FROM equipo
+            LEFT JOIN tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
+            LEFT JOIN estadoequipo ON equipo.estadoequipo_id = estadoequipo.id
+            LEFT JOIN unidad ON equipo.unidad_id = unidad.id
+            LEFT JOIN celular ON equipo.celular_id = celular.id
+            WHERE 1=1
+        """
+
+        params = []
+
+        if buscar:
+            query += " AND (unidad.nombre_e LIKE ? OR celular.nombre LIKE ?)"
+            params.append(f'%{buscar}%')
+            params.append(f'%{buscar}%')
+
+        if tipo_equipo:
+            query += " AND equipo.tipoequipo_id = ?"
+            params.append(tipo_equipo)
+
+        if estado:
+            query += " AND equipo.estadoequipo_id = ?"
+            params.append(estado)
+
+        cursor = conexion.cursor()
+        cursor.execute(query, params)
+        equipos = cursor.fetchall()
+        cursor.close()
+
+        # Crear un libro de Excel y seleccionar la primera hoja
+        wb = Workbook()
+        ws = wb.active
+
+        # Añadir encabezados a la primera fila
+        ws.append(['ID', 'Tipo de Equipo', 'Nombre', 'Estado', 'Observaciones'])
+
+        # Añadir filas de datos desde la consulta SQL
+        for equipo in equipos:
+            ws.append([equipo.id, equipo.tipo_equipo_nombre, equipo.nombre_equipo, equipo.estado_nombre, equipo.observaciones])
+
+        # Ajustar el ancho de las columnas
+        for col in ws.columns:
+            max_length = 0
+            for cell in col:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            adjusted_width = (max_length + 2) * 1.2
+            ws.column_dimensions[col[0].column_letter].width = adjusted_width
+
+        # Crear una respuesta con el archivo Excel adjunto
+        filename = "equipos.xlsx"
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        response = make_response(output.getvalue())
+        response.headers['Content-Disposition'] = 'attachment; filename=equipos.xlsx'
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+        return response
+    except Exception as ex:
+        print('Error al exportar a Excel:', ex)
+        flash('Error al exportar a Excel', 'error')
+        return redirect(url_for('lista_equipos'))
 
 
 
