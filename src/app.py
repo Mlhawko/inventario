@@ -185,45 +185,45 @@ def index():
 
         query ='''
             SELECT DISTINCT
-    persona.id,
-    persona.nombres,
-    persona.apellidos,
-    persona.correo,
-    persona.rut,
-    persona.dv,
-    area.nombre AS area_nombre,
-    tipoequipo.nombre AS tipo_nombre,
-    ISNULL(unidad.nombre_e, '') AS nombre_unidad,
-    ISNULL(celular.nombre, '') AS nombre_celular,
-    equipo.id AS equipo_id
-FROM
-    persona
-INNER JOIN
-    area ON persona.area_id = area.id
-LEFT JOIN 
-    asignacion_equipo ON persona.id = asignacion_equipo.persona_id
-LEFT JOIN 
-    equipo ON asignacion_equipo.equipo_id = equipo.id
-LEFT JOIN 
-    unidad ON equipo.unidad_id = unidad.id
-LEFT JOIN 
-    celular ON equipo.celular_id = celular.id
-LEFT JOIN 
-    tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
+                persona.id,
+                persona.nombres,
+                persona.apellidos,
+                persona.correo,
+                persona.rut,
+                persona.dv,
+                area.nombre AS area_nombre,
+                tipoequipo.nombre AS tipo_nombre,
+                ISNULL(unidad.nombre_e, '') AS nombre_unidad,
+                ISNULL(celular.nombre, '') AS nombre_celular,
+                equipo.id AS equipo_id
+            FROM
+                persona
+            INNER JOIN
+                area ON persona.area_id = area.id
+            LEFT JOIN
+                asignacion_equipo ON persona.id = asignacion_equipo.persona_id
+            LEFT JOIN
+                equipo ON asignacion_equipo.equipo_id = equipo.id
+            LEFT JOIN
+                unidad ON equipo.unidad_id = unidad.id
+            LEFT JOIN
+                celular ON equipo.celular_id = celular.id
+            LEFT JOIN
+                tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
 
-WHERE
-    equipo.estadoequipo_id = 2 AND asignacion_equipo.fecha_devolucion IS NULL
-         AND (
-                    persona.nombres LIKE ? OR
-                    persona.apellidos LIKE ? OR
-                    persona.correo LIKE ? OR
-                    persona.rut LIKE ? OR
-                    area.nombre LIKE ? OR
-                    tipoequipo.nombre LIKE ? OR
-                    unidad.nombre_e LIKE ? OR
-                    celular.nombre LIKE ?
-                )
-        '''
+            WHERE
+                equipo.estadoequipo_id = 2 AND asignacion_equipo.fecha_devolucion IS NULL
+                    AND (
+                                persona.nombres LIKE ? OR
+                                persona.apellidos LIKE ? OR
+                                persona.correo LIKE ? OR
+                                persona.rut LIKE ? OR
+                                area.nombre LIKE ? OR
+                                tipoequipo.nombre LIKE ? OR
+                                unidad.nombre_e LIKE ? OR
+                                celular.nombre LIKE ?
+                            )
+                '''
 
         cursor.execute(query, ('%' + search_term + '%',) * 8)  # Aplicar el término de búsqueda a cada campo
 
