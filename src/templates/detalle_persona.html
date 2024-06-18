@@ -1,62 +1,105 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle de Persona</title>
+    <title>Detalle de la Persona</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
+
+
+        .text-center {
+            text-align: center;
+        }
+        .fixed-navbar .container {
+            max-width: 1000px;
+        }
+        .fixed-navbar .navbar-brand img {
+            max-width: 150px;
+        }
+        .fixed-navbar .navbar-nav .nav-item .nav-link {
+            white-space: nowrap;
+        }
+        .fixed-navbar .dropdown-menu {
+            min-width: 200px;
+        }
+        body {
+            overflow-x: hidden;
+        }
         .container {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+            margin: 20px auto;
         }
-        h2 {
-            color: #007bff;
+        .table-responsive {
+            overflow-x: auto;
         }
-        h3 {
-            color: #343a40;
-        }
-        h4 {
-            color: #28a745;
-        }
-        p {
-            color: #6c757d;
+        .search-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
         }
     </style>
+
 </head>
+
 <body>
     <header>
         {% include 'menu.html' %}
     </header>
 
-    <div class="container mt-5">
-        <h2>Detalle de Persona</h2>
-        <hr>
-        <div>
-            <h3>{{ persona.nombres }}</h3>
-            <table class="table table-bordered mt-3">
-                <tbody>
+    <div class="container">
+        <h1 class="mb-4 text-center">Detalle de la Persona</h1>
+
+        <div class="row">
+            
+            <div class="col-md-12">
+                <table class="table">
                     <tr>
-                        <th>Correo:</th>
+                        <th>Nombre</th>
+                        <td>{{ persona.nombres }}</td>
+                    </tr>
+                    <tr>
+                        <th>Apellido</th>
+                        <td>{{ persona.apellidos }}</td>
+                    </tr>
+                    <tr>
+                        <th>Correo Electrónico</th>
                         <td>{{ persona.correo }}</td>
                     </tr>
                     <tr>
-                        <th>Área:</th>
-                        <td>{{ persona.area_nombre }}</td>
+                        <th>RUT</th>
+                        <td>{{ persona.rut }}-{{ persona.dv }}</td>
                     </tr>
-                </tbody>
-            </table>
-        </div>
-        <div>
-            <h4>Equipos Asignados:</h4>
-            <ul>
-            {% for equipo in equipos %}
-            <li><a href="{{ url_for('detalle_equipo', equipo_id=equipo.id, tipo_equipo_id=equipo.tipo_equipo_id) }}">{{ equipo.nombre }}</a></li>
-            {% endfor %}
-            </ul>
+                </table>
 
+                <h2>Equipos Asignados</h2>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID del Equipo</th>
+                            <th>Nombre del Equipo</th>
+                            <th>Tipo</th>
+                            <th>Modelo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for equipo in equipos_mantenidos %}
+                        <tr>
+                            <td>{{ equipo.id }}</td>
+                            <td>{{ equipo.nombre_equipo }}</td>
+                            <td>{{ equipo.tipo_equipo }}</td>
+                            <td>{{ equipo.modelo_equipo }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+
+
+
+
+
+            </div>
         </div>
     </div>
 
@@ -64,4 +107,5 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+
 </html>

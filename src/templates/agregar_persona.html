@@ -6,17 +6,37 @@
     <title>Agregar Persona</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
-        /* Estilo personalizado para el formulario */
-        .custom-form {
-            max-width: 400px; /* Ancho máximo del formulario */
-            margin: 0 auto; /* Centrar el formulario horizontalmente */
-            padding: 20px; /* Espaciado interno */
-            border: 1px solid #ccc; /* Borde */
-            border-radius: 10px; /* Radio de los bordes */
+        .fixed-navbar .container {
+            max-width: 1000px;
         }
-        /* Ajuste de espaciado vertical */
+        .fixed-navbar .navbar-brand img {
+            max-width: 150px;
+        }
+        .fixed-navbar .navbar-nav .nav-item .nav-link {
+            white-space: nowrap;
+        }
+        .fixed-navbar .dropdown-menu {
+            min-width: 200px;
+        }
+        body {
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .custom-form {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
         .form-group:not(:last-child) {
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
     </style>
 </head>
@@ -24,35 +44,46 @@
     <header>
         {% include 'menu.html' %}
     </header>
-    <div class="container mt-4">
-        
-        <form action="{{ url_for('agregar_persona') }}" method="POST" class="custom-form">
+    <div class="container mt-5">
+        <form action="{{ url_for('agregar_persona') }}" method="POST" class="custom-form" id="agregarPersonaForm">
             <h3 class="mb-4">Agregar Persona</h3>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="alert-container">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }}" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
             <div class="form-group">
                 <label for="nombres">Nombres:</label>
-                <input type="text" class="form-control" id="nombres" name="nombres" required>
+                <input type="text" class="form-control" id="nombres" name="nombres" maxlength="99" value="{{ nombres }}" required>
             </div>
             <div class="form-group">
                 <label for="apellidos">Apellidos:</label>
-                <input type="text" class="form-control" id="apellidos" name="apellidos" required>
+                <input type="text" class="form-control" id="apellidos" name="apellidos" maxlength="99" value="{{ apellidos }}" required>
             </div>
             <div class="form-group">
                 <label for="correo">Correo:</label>
-                <input type="email" class="form-control" id="correo" name="correo" required>
+                <input type="email" class="form-control" id="correo" name="correo" maxlength="99" value="{{ correo }}" required>
             </div>
             <div class="form-group">
                 <label for="rut">RUT:</label>
                 <div class="input-group">
-                    <input type="text" class="form-control" id="rut" name="rut" required>
+                    <input type="text" class="form-control" id="rut" name="rut" maxlength="10" value="{{ rut }}" required pattern="\d{7,8}">
                     <span class="input-group-text">-</span>
-                    <input type="text" class="form-control" id="dv" name="dv" required>
+                    <input type="text" class="form-control" id="dv" name="dv" maxlength="1" value="{{ dv }}" required pattern="\d|k|K">
                 </div>
+                <small id="rutHelp" class="form-text text-muted">Formato: 12345678-9 o 12345678-K</small>
             </div>
             <div class="form-group">
                 <label for="area">Área:</label>
                 <select class="form-control" id="area" name="area" required>
                     {% for area in areas %}
-                    <option value="{{ area.id }}">{{ area.nombre }}</option>
+                    <option value="{{ area.id }}" {% if area.id == area_id %}selected{% endif %}>{{ area.nombre }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -66,5 +97,28 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#agregarPersonaForm').on('submit', function(e) {
+                var rut = $('#rut').val();
+                var dv = $('#dv').val().toLowerCase();
+
+                if (!validarRut(rut, dv)) {
+                    e.preventDefault();
+                    alert('RUT inválido. Por favor, verifique los datos.');
+                }
+            });
+
+            function validarRut(rut, dv) {
+                var rutNumerico = parseInt(rut, 10);
+                var m = 0, s = 1;
+                for (; rutNumerico; rutNumerico = Math.floor(rutNumerico / 10)) {
+                    s = (s + rutNumerico % 10 * (9 - m++ % 6)) % 11;
+                }
+                var dvEsperado = s ? s - 1 : 'k';
+                return dv == dvEsperado;
+            }
+        });
+    </script>
 </body>
 </html>

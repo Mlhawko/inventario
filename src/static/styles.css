@@ -1,0 +1,46 @@
+/* Agrega estilos personalizados aquí */
+body {
+    background-color: #343a40; /* Fondo gris oscuro */
+    color: #fff; /* Texto blanco */
+}
+
+.container {
+    margin-top: 20px;
+}
+
+/* Anula algunos estilos de Bootstrap */
+.navbar {
+    background-color: #343a40 !important; /* Navbar con fondo gris oscuro */
+}
+
+html {
+    overflow-y: scroll;
+}
+
+/* Agrega estilos personalizados adicionales */
+.card {
+    background-color: #495057; /* Color de fondo de las tarjetas */
+    color: #fff; /* Texto blanco */
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); /* Sombra ligera */
+}
+
+.card-header {
+    background-color: #212529; /* Color de fondo del encabezado de la tarjeta */
+    border-bottom: none; /* Sin borde inferior en el encabezado de la tarjeta */
+    border-radius: 10px 10px 0 0; /* Bordes redondeados en la parte superior */
+}
+
+    .fixed-navbar .container {
+        max-width: 1000px; /* Ajusta este valor según lo que consideres adecuado para tu diseño */
+    }
+    .fixed-navbar .navbar-brand img {
+        max-width: 150px; /* Asegura que el logo tenga un tamaño consistente */
+    }
+    .fixed-navbar .navbar-nav .nav-item .nav-link {
+        white-space: nowrap; /* Evita que las palabras se partan en múltiples líneas */
+    }
+    .fixed-navbar .dropdown-menu {
+        min-width: 200px; /* Asegura que el dropdown tenga un tamaño mínimo consistente */
+    }
+

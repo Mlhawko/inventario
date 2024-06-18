@@ -6,6 +6,30 @@
     <title>Devolver Equipo</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    .fixed-navbar .container {
+            max-width: 1000px;
+        }
+        .fixed-navbar .navbar-brand img {
+            max-width: 150px;
+        }
+        .fixed-navbar .navbar-nav .nav-item .nav-link {
+            white-space: nowrap;
+        }
+        .fixed-navbar .dropdown-menu {
+            min-width: 200px;
+        }
+        body {
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+</style>
 </head>
 <body>
     <header>
@@ -13,7 +37,7 @@
     </header>
 
     <div class="container">
-        <h1>Devolver Equipo</h1>
+        <h1>Devolucion de Equipo</h1>
         <form method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="equipo">Equipo</label>
@@ -36,7 +60,7 @@
                 <input type="file" class="form-control-file" id="archivo_pdf" name="archivo_pdf">
             </div>
             <button type="submit" class="btn btn-primary">Devolver Equipo</button>
-            <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+            <a href="{{ url_for('detalle_equipo', equipo_id=equipo_id) }}" class="btn btn-secondary">Cancelar</a>
         </form>
     </div>
 

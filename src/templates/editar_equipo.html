@@ -7,37 +7,56 @@
     <title>Editar Equipo</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Estilo personalizado para el formulario */
-        .custom-form {
-            max-width: 600px;
-            /* Ancho máximo del formulario */
-            margin: 0 auto;
-            /* Centrar el formulario horizontalmente */
-            padding: 5px;
-            /* Espaciado interno */
-            border: 1px solid #ccc;
-            /* Borde */
-            border-radius: 10px;
-            /* Radio de los bordes */
-            font-size: 0.8rem;
-            /* Tamaño de fuente más pequeño */
+        .fixed-navbar .container {
+            max-width: 1000px;
         }
 
-        /* Ajuste de espaciado vertical */
+        .fixed-navbar .navbar-brand img {
+            max-width: 150px;
+        }
+
+        .fixed-navbar .navbar-nav .nav-item .nav-link {
+            white-space: nowrap;
+        }
+
+        .fixed-navbar .dropdown-menu {
+            min-width: 200px;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .custom-form {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+
         .form-group:not(:last-child) {
             margin-bottom: 4px;
         }
 
-        /* Ajuste de tamaño de fuente de etiquetas */
         label {
-            font-size: 0.8rem;
+            font-size: 1rem;
         }
 
-        /* Ajuste de tamaño de fuente de inputs */
         input[type="text"],
         select,
         textarea {
-            font-size: 0.8rem;
+            font-size: 1rem;
             padding: 0.2rem 0.5rem;
         }
     </style>
@@ -51,131 +70,119 @@
         <form action="{{ url_for('editar_equipo', id=equipo.id) }}" method="POST" class="custom-form">
             <h1 class="mb-3">Editar Equipo</h1>
             {% if detalle_equipo %}
-            {% if tipo_equipo == 'unidad' %}
-            <div class="form-group">
-                <label for="nombre">Nombre de la Unidad:</label>
-                <input type="text" id="nombre" name="nombre" value="{{ detalle_equipo['nombre_e'] }}">
-            </div>
-            {% elif tipo_equipo == 'celular' %}
-            <div class="form-group">
-                <label for="nombre">Nombre del Celular:</label>
-                <input type="text" id="nombre" name="nombre" value="{{ detalle_equipo['nombre'] }}">
-            </div>
-            {% endif %}
-            <div class="row">
-                <div class="col-md-6">
+                {% if tipo_equipo == 'unidad' %}
+                    {% if detalle_equipo['nombre_e'] %}
+                        <div class="form-group">
+                            <label for="nombre">Nombre de la Unidad:</label>
+                            <input type="text" id="nombre" name="nombre" value="{{ detalle_equipo['nombre_e'] }}">
+                        </div>
+                    {% endif %}
+                {% elif tipo_equipo == 'celular' %}
+                    {% if detalle_equipo['nombre'] %}
+                        <div class="form-group">
+                            <label for="nombre">Nombre del Celular:</label>
+                            <input type="text" id="nombre" name="nombre" value="{{ detalle_equipo['nombre'] }}">
+                        </div>
+                    {% endif %}
+                {% endif %}
+                {% if detalle_equipo['marca'] %}
                     <div class="form-group">
                         <label for="marca">Marca:</label>
-                        <input type="text" class="form-control" id="marca" name="marca"
-                            value="{{ detalle_equipo['marca'] }}">
+                        <input type="text" class="form-control" id="marca" name="marca" value="{{ detalle_equipo['marca'] }}">
                     </div>
-                </div>
-                <div class="col-md-6">
+                {% endif %}
+                {% if detalle_equipo['modelo'] %}
                     <div class="form-group">
                         <label for="modelo">Modelo:</label>
-                        <input type="text" class="form-control" id="modelo" name="modelo"
-                            value="{{ detalle_equipo['modelo'] }}">
+                        <input type="text" class="form-control" id="modelo" name="modelo" value="{{ detalle_equipo['modelo'] }}">
                     </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="serial">Serial:</label>
-                <input type="text" class="form-control" id="serial" name="serial"
-                    value="{{ detalle_equipo['serial'] }}">
-            </div>
+                {% endif %}
+                {% if detalle_equipo['serial'] %}
+                    <div class="form-group">
+                        <label for="serial">Serial:</label>
+                        <input type="text" class="form-control" id="serial" name="serial" value="{{ detalle_equipo['serial'] }}">
+                    </div>
+                {% endif %}
             {% endif %}
             {% if tipo_equipo == 'unidad' %}
-            <div class="row">
-                <div class="col-md-6">
+                {% if detalle_equipo['ram'] %}
                     <div class="form-group">
                         <label for="ram">RAM:</label>
-                        <input type="text" class="form-control" id="ram" name="ram"
-                            value="{{ detalle_equipo['ram'] }}">
+                        <input type="text" class="form-control" id="ram" name="ram" value="{{ detalle_equipo['ram'] }}">
                     </div>
-                </div>
-                <div class="col-md-6">
+                {% endif %}
+                {% if detalle_equipo['procesador'] %}
                     <div class="form-group">
                         <label for="procesador">Procesador:</label>
-                        <input type="text" class="form-control" id="procesador" name="procesador"
-                            value="{{ detalle_equipo['procesador'] }}">
+                        <input type="text" class="form-control" id="procesador" name="procesador" value="{{ detalle_equipo['procesador'] }}">
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
+                {% endif %}
+                {% if detalle_equipo['almc'] %}
                     <div class="form-group">
                         <label for="almc">Almacenamiento:</label>
-                        <input type="text" class="form-control" id="almc" name="almc"
-                            value="{{ detalle_equipo['almc'] }}">
+                        <input type="text" class="form-control" id="almc" name="almc" value="{{ detalle_equipo['almc'] }}">
                     </div>
-                </div>
-                <div class="col-md-6">
+                {% endif %}
+                {% if detalle_equipo['perif'] %}
                     <div class="form-group">
-                        <label for="perifericos">Perifericos:</label>
-                        <input type="text" class="form-control" id="perifericos" name="perifericos"
-                            value="{{ detalle_equipo['perifericos'] }}">
+                        <label for="perifericos">Periféricos:</label>
+                        <input type="text" class="form-control" id="perif" name="perif" value="{{ detalle_equipo['perif'] }}">
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
+                {% endif %}
+                {% if detalle_equipo['numsello'] %}
                     <div class="form-group">
-                        <label for="numsello">Numero de Sello:</label>
-                        <input type="text" class="form-control" id="numsello" name="numsello"
-                            value="{{ detalle_equipo['numsello'] }}">
+                        <label for="numsello">Número de Sello:</label>
+                        <input type="text" class="form-control" id="numsello" name="numsello" value="{{ detalle_equipo['numsello'] }}">
                     </div>
-                </div>
-                <div class="col-md-6">
+                {% endif %}
+                {% if detalle_equipo['numproducto'] %}
                     <div class="form-group">
-                        <label for="numproducto">Numero de Producto:</label>
-                        <input type="text" class="form-control" id="numproducto" name="numproducto"
-                            value="{{ detalle_equipo['numproducto'] }}">
+                        <label for="numproducto">Número de Producto:</label>
+                        <input type="text" class="form-control" id="numproducto" name="numproducto" value="{{ detalle_equipo['numproducto'] }}">
                     </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="tipoimpresion">Tipo de Impresion:</label>
-                <input type="text" class="form-control" id="tipoimpresion" name="tipoimpresion"
-                    value="{{ detalle_equipo['tipoimpresion'] }}">
-            </div>
+                {% endif %}
+                {% if detalle_equipo['tipoimpresion'] %}
+                    <div class="form-group">
+                        <label for="tipoimpresion">Tipo de Impresión:</label>
+                        <input type="text" class="form-control" id="tipoimpresion" name="tipoimpresion" value="{{ detalle_equipo['tipoimpresion'] }}">
+                    </div>
+                {% endif %}
+                {% if detalle_equipo['cantidad'] %}
+                    <div class="form-group">
+                        <label for="cantidad">Cantidad:</label>
+                        <input type="text" class="form-control" id="cantidad" name="cantidad" value="{{ detalle_equipo['cantidad'] }}">
+                    </div>
+                {% endif %}
             {% endif %}
-            <!-- Campos adicionales para celulares -->
             {% if tipo_equipo == 'celular' %}
-            <div class="form-group">
-                <label for="imei1">IMEI 1:</label>
-                <input type="text" class="form-control" id="imei1" name="imei1"
-                    value="{{ detalle_equipo['imei1'] }}">
-            </div>
-            <div class="form-group">
-                <label for="imei2">IMEI 2:</label>
-                <input type="text" class="form-control" id="imei2" name="imei2"
-                    value="{{ detalle_equipo['imei2'] }}">
-            </div>
-            <div class="form-group">
-                <label for="SIMcard">SIMCard:</label>
-                <input type="text" class="form-control" id="SIMcard" name="SIMcard"
-                    value="{{ detalle_equipo['SIMcard'] }}">
-            </div>
+                {% if detalle_equipo['imei1'] %}
+                    <div class="form-group">
+                        <label for="imei1">IMEI 1:</label>
+                        <input type="text" class="form-control" id="imei1" name="imei1" value="{{ detalle_equipo['imei1'] }}">
+                    </div>
+                {% endif %}
+                {% if detalle_equipo['imei2'] %}
+                    <div class="form-group">
+                        <label for="imei2">IMEI 2:</label>
+                        <input type="text" class="form-control" id="imei2" name="imei2" value="{{ detalle_equipo['imei2'] }}">
+                    </div>
+                {% endif %}
+                
+                {% if detalle_equipo['ntelefono'] %}
+                    <div class="form-group">
+                        <label for="ntelefono">N° Telefono:</label>
+                        <input type="text" class="form-control" id="ntelefono" name="ntelefono" value="{{ detalle_equipo['ntelefono'] }}">
+                    </div>
+                {% endif %}
             {% endif %}
-            <div class="form-group">
-                <label for="estado_equipo">Estado del Equipo:</label>
-                <select class="form-control" id="estado_equipo" name="estado_equipo">
-                    {% for estado in estados %}
-                    <option value="{{ estado.id }}" {% if estado.id==equipo.estadoequipo_id %} selected {% endif %}>{{
-                        estado.nombre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
             <div class="form-group">
                 <label for="observaciones">Observaciones:</label>
-                <textarea class="form-control" id="observaciones" name="observaciones"
-                    rows="3">{{ equipo.observaciones }}</textarea>
+                <textarea class="form-control" id="observaciones" name="observaciones" rows="3">{{ equipo.observaciones }}</textarea>
             </div>
             <button type="submit" class="btn btn-primary">Guardar Cambios</button>
             <a href="{{ url_for('mostrar_equipos') }}" class="btn btn-secondary">Cancelar</a>
         </form>
     </div>
-
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

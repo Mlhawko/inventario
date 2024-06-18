@@ -4,42 +4,144 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asignar Equipo</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .fixed-navbar .container {
+            max-width: 1000px;
+        }
+        .fixed-navbar .navbar-brand img {
+            max-width: 150px;
+        }
+        .fixed-navbar .navbar-nav .nav-item .nav-link {
+            white-space: nowrap;
+        }
+        .fixed-navbar .dropdown-menu {
+            min-width: 200px;
+        }
+        body {
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        html {
+            overflow-y: scroll; /* Añadir esta línea */
+        }
+        .form-container {
+            max-width: 600px; /* Ancho máximo del contenedor del formulario */
+            margin: 0 auto; /* Centrando el contenedor */
+            padding: 20px; /* Relleno interior */
+            background-color: #f8f9fa; /* Fondo claro */
+            border-radius: 10px; /* Bordes redondeados */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+        }
+        h1 {
+            margin-bottom: 20px; /* Añadir margen inferior para el título */
+        }
+        .form-group {
+            margin-bottom: 15px; /* Añadir margen inferior entre los grupos de formulario */
+        }
+        .btn-container {
+            display: flex; /* Alinear los botones en una línea */
+            justify-content: space-between; /* Espacio entre los botones */
+        }
+    </style>
 </head>
 <body>
+    <header>
+        {% include 'menu.html' %}
+    </header>
+
     <div class="container">
-        <h1>Asignar Equipo</h1>
-        <form method="POST" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="persona_id">Persona</label>
-                <select class="form-control" id="persona_id" name="persona_id" required>
-                    {% for persona in personas %}
-                    <option value="{{ persona.id }}">{{ persona.nombres }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="equipo_id">Equipo</label>
-                <select class="form-control" id="equipo_id" name="equipo_id" required>
-                    {% for equipo in equipos %}
-                    <option value="{{ equipo.id }}">{{ equipo.nombre_equipo }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="observaciones">Observaciones</label>
-                <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="archivo_pdf">Subir archivo PDF</label>
-                <input type="file" class="form-control-file" id="archivo_pdf" name="archivo_pdf" accept=".pdf" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Asignar Equipo</button>
-        </form>
+        <div class="form-container">
+            <h3 class="text-center">Asignar Equipo</h3>
+            <form method="POST" enctype="multipart/form-data" id="asignar-form">
+                <div class="form-group">
+                    <label for="persona_id">Persona</label>
+                    <select class="form-control" id="persona_id" name="persona_id" required>
+                        <option value="" disabled selected>Seleccione una persona</option>
+                        {% for persona in personas %}
+                        <option value="{{ persona.id }}">{{ persona.nombres }} {{ persona.apellidos }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="equipo-container">
+                    <div class="equipo-group d-flex align-items-center mb-2">
+                        <select class="form-control equipo-select" name="equipo_id[]" required>
+                            <option value="" disabled selected>Seleccione un equipo disponible</option>
+                            {% for equipo in equipos %}
+                            <option value="{{ equipo.id }}">{{ equipo.nombre_equipo }} - {{ equipo.tipo_nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-danger btn-sm ml-2 remove-equipo">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary mb-2" id="add-equipo">Agregar otro equipo</button>
+                <div class="form-group">
+                    <label for="observaciones">Observaciones</label>
+                    <textarea class="form-control" id="observaciones" name="observaciones" rows="3" placeholder="Ingrese sus observaciones"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="archivo_pdf">Subir archivo PDF</label>
+                    <input type="file" class="form-control-file" id="archivo_pdf" name="archivo_pdf" accept=".pdf" required>
+                </div>
+                <div class="btn-container">
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Volver</a>
+                    <button type="submit" class="btn btn-primary">Asignar Equipos</button>
+                </div>
+            </form>
+        </div>
     </div>
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#add-equipo').click(function() {
+                let newEquipoGroup = $('.equipo-group').first().clone();
+                newEquipoGroup.find('select').val('');
+                newEquipoGroup.find('.remove-equipo').show();
+                $('#equipo-container').append(newEquipoGroup);
+            });
+
+            $('#equipo-container').on('click', '.remove-equipo', function() {
+                $(this).closest('.equipo-group').remove();
+            });
+
+            $('#asignar-form').submit(function() {
+                let selectedEquipos = [];
+                let isValid = true;
+
+                $('.equipo-select').each(function() {
+                    if ($(this).val() && selectedEquipos.includes($(this).val())) {
+                        isValid = false;
+                        alert('No se pueden asignar equipos duplicados.');
+                        return false;
+                    }
+                    selectedEquipos.push($(this).val());
+                });
+
+                return isValid;
+            });
+
+            $('.remove-equipo').first().hide(); // Hide remove button for the first equipo group
+        });
+
+        
+    </script>
 </body>
+
+
+
 </html>

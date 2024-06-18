@@ -1,58 +1,150 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Inventario</title>
-    <link rel="stylesheet" href="styles.css" /> <!-- Enlazar el archivo CSS común -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Gestión de Inventario</title>
+        <link rel="stylesheet" href="styles.css"> <!-- Enlazar el archivo CSS común -->
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css" rel="stylesheet">
+        <style>
+            .fixed-navbar .container {
+            max-width: 1000px;
+        }
+        .fixed-navbar .navbar-brand img {
+            max-width: 150px;
+        }
+        .fixed-navbar .navbar-nav .nav-item .nav-link {
+            white-space: nowrap;
+        }
+        .fixed-navbar .dropdown-menu {
+            min-width: 200px;
+        }
+        body {
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 20px auto;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+            .detalle-container {
+                background-color: #f8f9fa; /* Color de fondo para los detalles */
+            }
+            .detalle-btn {
+                margin-bottom: 10px; /* Espacio entre los botones y la tabla */
+            }
+            .search-bar {
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+            }
+        </style>
+
+    
 </head>
 <body>
     <header>
         {% include 'menu.html' %}
     </header>
-
+    
     <div class="container">
-        <h1>Lista de Personas</h1>
-        <div class="row">
-            <div class="col-md-12">
-                <a href="{{ url_for('asignar_equipo') }}" class="btn btn-primary mb-3">Asignar equipo</a>
-                <a href="{{ url_for('lista_equipos') }}" class="btn btn-primary mb-3">Equipos</a>
+        <div class="d-flex justify-content-center align-items-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="rounded mx-2" viewBox="0 0 16 16">
+                <path d="M8 1a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1zm1 13.5a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0m2 0a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0M9.5 1a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zM9 3.5a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 0-1h-5a.5.5 0 0 0-.5.5M1.5 2A1.5 1.5 0 0 0 0 3.5v7A1.5 1.5 0 0 0 1.5 12H6v2h-.5a.5.5 0 0 0 0 1H7v-4H1.5a.5.5 0 0 1-.5-.5v-7a.5.5 0 0 1 .5-.5H7V2z"/>
+            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="rounded mx-2" viewBox="0 0 16 16">
+                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+            </svg>
+        </div>
+        <h1 class="text-center mb-4">Gestión de Inventario</h1>
+        
+        <div class="row justify-content-between mb-3">
+            <div class="col-md-6">
+                <a href="{{ url_for('asignar_equipo') }}" class="btn btn-primary mb-3 ">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                      </svg>
 
+                    Asignar equipo</a>
+                <a href="{{ url_for('lista_equipos') }}" class="btn btn-primary mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-laptop" viewBox="0 0 16 16">
+                        <path d="M13.5 3a.5.5 0 0 1 .5.5V11H2V3.5a.5.5 0 0 1 .5-.5zm-11-1A1.5 1.5 0 0 0 1 3.5V12h14V3.5A1.5 1.5 0 0 0 13.5 2zM0 12.5h16a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5"/>
+                      </svg>
+                    Equipos</a>
+            </div>
+            <div class="col-md-6 search-bar mb-3">
+                <form method="POST" action="/" class="form-inline">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Buscar..." name="search_term" value="{{ search_term }}">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="submit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                                  </svg>
+                                Buscar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-                <table class="table">
-                    <thead>
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <table id="example" class="table">
+                    <thead class="thead-dark">
                         <tr>
-                            
-                            <th>Rut</th>
-                            <th>Nombre</th>
-                            <th>Apellido</th>
-                            <th>Correo</th>
-                            <th>Área</th>
-                            <th>Acciones</th>
+                            <th scope="col">Rut</th>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Apellido</th>
+                            <th scope="col">Correo</th>
+                            <th scope="col">Área</th>
+                            <th scope="col">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for persona in personas %}
                         <tr>
-                            
                             <td>{{ persona.rut }}-{{ persona.dv }}</td>
                             <td>{{ persona.nombres }}</td>
                             <td>{{ persona.apellidos }}</td>
                             <td>{{ persona.correo }}</td>
                             <td>{{ persona.area_nombre }}</td>
                             <td>
-                                <button type="button" class="btn btn-secondary detalle-btn" data-target="detalle-{{ persona.id }}">Detalle</button>
+                                <div class="row">
+                                    <button type="button" class="btn btn-sm btn-secondary detalle-btn ml-2" data-target="detalle-{{ persona.id }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-menu-down mr-1" viewBox="0 0 16 16">
+                                            <path d="M7.646.146a.5.5 0 0 1 .708 0L10.207 2H14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h3.793zM1 7v3h14V7zm14-1V4a1 1 0 0 0-1-1h-3.793a1 1 0 0 1-.707-.293L8 1.207l-1.5 1.5A1 1 0 0 1 5.793 3H2a1 1 0 0 0-1 1v2zm0 5H1v2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1zM2 4.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5m0 4a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5m0 4a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5"/>
+                                        </svg>
+                                        Equipos
+                                    </button>
+                            
+                                    <a href="{{ url_for('detalle_persona', persona_id=persona.id) }}" class="btn btn-primary detalle-btn ml-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-file-earmark-person" viewBox="0 0 16 16">
+                                            <path d="M11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                                            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2v9.255S12 12 8 12s-5 1.755-5 1.755V2a1 1 0 0 1 1-1h5.5z"/>
+                                          </svg>
+                                        Detalle
+                                    </a>
+                                </div>
                             </td>
+                            
+                            
+                                
+                            
+                            
                         </tr>
                         <tr id="detalle-{{ persona.id }}" class="detalle-container" style="display: none;">
-                            <td colspan="7">
+                            <td colspan="6">
                                 <div class="equipos-container">
                                     <ul>
                                         {% for equipo in persona.equipos_asignados %}
                                         <li>
-                                            <a href="{{ url_for('detalle_equipo', equipo_id=equipo.equipo_id) }}">{{ equipo.nombre }}</a>
-                                            <a href="{{ url_for('devolver_equipo', equipo_id=equipo.equipo_id) }}" class="btn btn-secondary">Devolver</a>
+                                            <a href="{{ url_for('detalle_equipo', equipo_id=equipo.equipo_id) }}">{{ equipo.nombre }} - {{ equipo.tipoequipo}}</a>
                                         </li>
                                         {% endfor %}
                                     </ul>
@@ -65,7 +157,7 @@
             </div>
         </div>
     </div>
-
+    {% include 'footer.html' %}
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
