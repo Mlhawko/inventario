@@ -60,12 +60,14 @@
                 <input type="file" class="form-control-file" id="archivo_pdf" name="archivo_pdf">
             </div>
             <button type="submit" class="btn btn-primary">Devolver Equipo</button>
-            <a href="{{ url_for('detalle_equipo', equipo_id=equipo_id) }}" class="btn btn-secondary">Cancelar</a>
+            <a href="{{ url_for('detalle_persona', persona_id=persona_id) }}" class="btn btn-secondary">Cancelar</a>
         </form>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="{{ url_for('static', filename='logout_timeout.js') }}"></script>
 </body>
 </html>

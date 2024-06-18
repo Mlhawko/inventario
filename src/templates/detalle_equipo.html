@@ -80,17 +80,7 @@
                         popupWin.document.close();
                     }
                 </script>
-                
-                
-                {% if equipo[0].estado_nombre == 'Asignado' %}
-                <a href="{{ url_for('devolver_equipo', equipo_id=equipo[0].id) }}" class="btn btn-secondary mb-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-dash-circle" viewBox="0 0 16 16">
-                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                        <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
-                    </svg>
-                    Devolución
-                </a>
-                {% endif %}
+
             </div>
                 <table class="table">
                     <tr><th>ID</th><td>{{ equipo[0].id }}</td></tr>
@@ -187,42 +177,13 @@
                 {% endfor %}
             </tbody>
         </table>
-
-   
-
-        <h2>Otros Equipos Asignados a la Persona</h2>
-        {% if otros_equipos %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for equipo in otros_equipos %}
-                <tr>
-                    <td>{{ equipo.id }}</td>
-                    <td>{{ equipo.nombre_equipo }}</td>
-                    <td>{{ equipo.estado_nombre }}</td>
-                    <td>
-                        <a href="{{ url_for('detalle_equipo', equipo_id=equipo.id) }}" class="btn btn-info">Ver Detalle</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        
-        <p>No hay otros equipos asignados a esta persona.</p>
-        {% endif %}
     </div>
 
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="{{ url_for('static', filename='logout_timeout.js') }}"></script>
 </body>
 </html>

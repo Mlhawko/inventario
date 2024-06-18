@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,33 +10,42 @@
         .fixed-navbar .container {
             max-width: 1000px;
         }
+
         .fixed-navbar .navbar-brand img {
             max-width: 150px;
         }
+
         .fixed-navbar .navbar-nav .nav-item .nav-link {
             white-space: nowrap;
         }
+
         .fixed-navbar .dropdown-menu {
             min-width: 200px;
         }
+
         body {
             overflow-x: hidden;
         }
+
         .container {
             max-width: 1000px;
             margin: 20px auto;
         }
+
         .table-responsive {
             overflow-x: auto;
         }
+
         .form-group {
             margin-bottom: 0.1rem;
         }
+
         label {
             margin-bottom: 0.2rem;
         }
     </style>
 </head>
+
 <body>
     <header>
         {% include 'menu.html' %}
@@ -50,111 +60,125 @@
 
                         {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
-                            <div class="alert-container">
-                                {% for category, message in messages %}
-                                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }}" role="alert">
-                                        {{ message }}
-                                    </div>
-                                {% endfor %}
+                        <div class="alert-container">
+                            {% for category, message in messages %}
+                            {% if category == 'agregar_equipo_success' %}
+                            <div class="alert alert-success" role="alert">
+                                {{ message }}
                             </div>
-                        {% endif %}
-                    {% endwith %}    
-
-                    <div class="form-group">
-                        <label for="tipo_equipo">Tipo de Equipo:</label>
-                        <select class="form-control" id="tipo_equipo" name="tipo_equipo" required>
-                            <option value="" disabled selected>Selecciona un tipo de equipo</option>
-                            {% for tipo_equipo in tipos_equipos %}
-                                <option value="{{ tipo_equipo.id }}_{{ tipo_equipo.nombre | lower | replace(' ', '_') }}">{{ tipo_equipo.nombre }}</option>
+                            {% elif category == 'agregar_equipo_error' %}
+                            <div class="alert alert-danger" role="alert">
+                                {{ message }}
+                            </div>
+                            {% endif %}
                             {% endfor %}
-                        </select>
-                    </div>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
 
-                    <div class="form-group campos-comun" style="display: none;">
-                        <label for="nombre">Nombre:</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" maxlength="99" ">
-                    </div>
-                    <div class="form-group campos-comun" style="display: none;" >
-                        <label for="marca">Marca:</label>
-                        <input type="text" class="form-control" id="marca" name="marca" maxlength="99">
-                    </div>
-                    <div class="form-group campos-comun" style="display: none;" >
-                        <label for="modelo">Modelo:</label>
-                        <input type="text" class="form-control" id="modelo" name="modelo" maxlength="99">
-                    </div>
-                    <div class="form-group campos-comun" style="display: none;" >
-                        <label for="serial">Serial:</label>
-                        <input type="text" class="form-control" id="serial" name="serial" maxlength="99">
-                    </div>
 
-                    <!-- Campos específicos -->
-                    <div class="form-group campos-notebook campos-pc campos-mac" style="display: none;">
-                        <label for="ram">RAM (GB):</label>
-                        <input type="text" class="form-control" id="ram" name="ram" maxlength="99">
-                    </div>
-                    <div class="form-group campos-notebook campos-pc campos-mac" style="display: none;" >
-                        <label for="procesador">Procesador:</label>
-                        <input type="text" class="form-control" id="procesador" name="procesador" maxlength="99">
-                    </div>
-                    <div class="form-group campos-notebook campos-pc campos-mac" style="display: none;" >
-                        <label for="almc">Almacenamiento:</label>
-                        <input type="text" class="form-control" id="almc" name="almc" maxlength="99">
-                    </div>
-                    <div class="form-group campos-notebook campos-pc campos-mac" style="display: none;" >
-                        <label for="perif">Periféricos:</label>
-                        <input type="text" class="form-control" id="perif" name="perif" maxlength="99">
-                    </div>
-                    <div class="form-group campos-notebook campos-pc campos-mac" style="display: none;">
-                        <label for="numsello">N° Sello:</label>
-                        <input type="text" class="form-control" id="numsello" name="numsello" maxlength="99">
-                    </div>
-                    <div class="form-group campos-notebook campos-pc campos-mac campos-monitor" style="display: none;">
-                        <label for="numproducto">PT/N° Producto:</label>
-                        <input type="text" class="form-control" id="numproducto" name="numproducto" maxlength="99">
-                    </div>
 
-                    <div class="form-group campos-impresora" style="display: none;">
-                        <label for="tipoimpresion">Tipo de impresión:</label>
-                        <input type="text" class="form-control" id="tipoimpresion" name="tipoimpresion" maxlength="99">
-                    </div>
 
-                    <div class="form-group campos-celular campos-simcard" style="display: none;">
-                        <label for="imei1">IMEI1:</label>
-                        <input type="text" class="form-control" id="imei1" name="imei1">
-                    </div>
-                    <div class="form-group campos-celular" style="display: none;">
-                        <label for="imei2">IMEI2:</label>
-                        <input type="text" class="form-control" id="imei2" name="imei2">
-                    </div>
-                    
+                        <div class="form-group">
+                            <label for="tipo_equipo">Tipo de Equipo:</label>
+                            <select class="form-control" id="tipo_equipo" name="tipo_equipo" required>
+                                <option value="" disabled selected>Selecciona un tipo de equipo</option>
+                                {% for tipo_equipo in tipos_equipos %}
+                                <option
+                                    value="{{ tipo_equipo.id }}_{{ tipo_equipo.nombre | lower | replace(' ', '_') }}">{{
+                                    tipo_equipo.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-                    <div class="form-group campos-accesorios" style="display: none;">
-                        <label for="cantidad">Cantidad:</label>
-                        <input type="text" class="form-control" id="cantidad" name="cantidad">
+                        <div class="form-group campos-comun" style="display: none;">
+                            <label for="nombre">Nombre:</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" maxlength="99" ">
                     </div>
+                    <div class=" form-group campos-comun" style="display: none;">
+                            <label for="marca">Marca:</label>
+                            <input type="text" class="form-control" id="marca" name="marca" maxlength="99">
+                        </div>
+                        <div class="form-group campos-comun" style="display: none;">
+                            <label for="modelo">Modelo:</label>
+                            <input type="text" class="form-control" id="modelo" name="modelo" maxlength="99">
+                        </div>
+                        <div class="form-group campos-comun" style="display: none;">
+                            <label for="serial">Serial:</label>
+                            <input type="text" class="form-control" id="serial" name="serial" maxlength="99">
+                        </div>
 
-                    <div class="form-group campos-simcard" style="display: none;">
-                        <label for="ntelefono">Número teléfono:</label>
-                        <input type="text" class="form-control" id="ntelefono" name="ntelefono">
-                    </div>
-                    <div class="form-group campos-comun campos-simcard">
-                        <label for="observaciones">Descripcion:</label>
-                        <textarea class="form-control" id="observaciones" name="observaciones" rows="3" placeholder="Ingrese una descripcion"></textarea>
-                    </div>
+                        <!-- Campos específicos -->
+                        <div class="form-group campos-notebook campos-pc campos-mac" style="display: none;">
+                            <label for="ram">RAM (GB):</label>
+                            <input type="text" class="form-control" id="ram" name="ram" maxlength="99">
+                        </div>
+                        <div class="form-group campos-notebook campos-pc campos-mac" style="display: none;">
+                            <label for="procesador">Procesador:</label>
+                            <input type="text" class="form-control" id="procesador" name="procesador" maxlength="99">
+                        </div>
+                        <div class="form-group campos-notebook campos-pc campos-mac" style="display: none;">
+                            <label for="almc">Almacenamiento:</label>
+                            <input type="text" class="form-control" id="almc" name="almc" maxlength="99">
+                        </div>
+                        <div class="form-group campos-notebook campos-pc campos-mac" style="display: none;">
+                            <label for="perif">Periféricos:</label>
+                            <input type="text" class="form-control" id="perif" name="perif" maxlength="99">
+                        </div>
+                        <div class="form-group campos-notebook campos-pc campos-mac" style="display: none;">
+                            <label for="numsello">N° Sello:</label>
+                            <input type="text" class="form-control" id="numsello" name="numsello" maxlength="99">
+                        </div>
+                        <div class="form-group campos-notebook campos-pc campos-mac campos-monitor"
+                            style="display: none;">
+                            <label for="numproducto">PT/N° Producto:</label>
+                            <input type="text" class="form-control" id="numproducto" name="numproducto" maxlength="99">
+                        </div>
 
-                    <button type="submit" class="btn btn-primary btn-block mt-3">Agregar Equipo</button>
+                        <div class="form-group campos-impresora" style="display: none;">
+                            <label for="tipoimpresion">Tipo de impresión:</label>
+                            <input type="text" class="form-control" id="tipoimpresion" name="tipoimpresion"
+                                maxlength="99">
+                        </div>
+
+                        <div class="form-group campos-celular campos-simcard" style="display: none;">
+                            <label for="imei1">IMEI1:</label>
+                            <input type="text" class="form-control" id="imei1" name="imei1">
+                        </div>
+                        <div class="form-group campos-celular" style="display: none;">
+                            <label for="imei2">IMEI2:</label>
+                            <input type="text" class="form-control" id="imei2" name="imei2">
+                        </div>
+
+
+                        <div class="form-group campos-accesorios" style="display: none;">
+                            <label for="cantidad">Cantidad:</label>
+                            <input type="text" class="form-control" id="cantidad" name="cantidad">
+                        </div>
+
+                        <div class="form-group campos-simcard" style="display: none;">
+                            <label for="ntelefono">Número teléfono:</label>
+                            <input type="text" class="form-control" id="ntelefono" name="ntelefono">
+                        </div>
+                        <div class="form-group campos-comun campos-simcard">
+                            <label for="observaciones">Descripcion:</label>
+                            <textarea class="form-control" id="observaciones" name="observaciones" rows="3"
+                                placeholder="Ingrese una descripcion"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block mt-3">Agregar Equipo</button>
                 </form>
             </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('tipo_equipo').addEventListener('change', function() {
+        document.getElementById('tipo_equipo').addEventListener('change', function () {
             var selectedOption = this.value.split('_')[1];
             var allCampos = document.querySelectorAll('.form-group');
 
             // Ocultar todos los campos excepto el select
-            allCampos.forEach(function(campos) {
+            allCampos.forEach(function (campos) {
                 if (!campos.querySelector('select')) {
                     campos.style.display = 'none';
                 }
@@ -162,14 +186,14 @@
 
             // Mostrar los campos específicos
             var camposToShow = document.querySelectorAll('.campos-' + selectedOption);
-            camposToShow.forEach(function(campos) {
+            camposToShow.forEach(function (campos) {
                 campos.style.display = 'block';
             });
 
             // Mostrar campos comunes si no es simcard
             if (selectedOption !== 'simcard') {
                 var commonCampos = document.querySelectorAll('.campos-comun');
-                commonCampos.forEach(function(campos) {
+                commonCampos.forEach(function (campos) {
                     campos.style.display = 'block';
                 });
             }
@@ -178,5 +202,8 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="{{ url_for('static', filename='logout_timeout.js') }}"></script>
 </body>
+
 </html>

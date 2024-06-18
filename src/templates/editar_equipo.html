@@ -85,95 +85,67 @@
                         </div>
                     {% endif %}
                 {% endif %}
-                {% if detalle_equipo['marca'] %}
                     <div class="form-group">
                         <label for="marca">Marca:</label>
                         <input type="text" class="form-control" id="marca" name="marca" value="{{ detalle_equipo['marca'] }}">
                     </div>
-                {% endif %}
-                {% if detalle_equipo['modelo'] %}
                     <div class="form-group">
                         <label for="modelo">Modelo:</label>
                         <input type="text" class="form-control" id="modelo" name="modelo" value="{{ detalle_equipo['modelo'] }}">
                     </div>
-                {% endif %}
-                {% if detalle_equipo['serial'] %}
                     <div class="form-group">
                         <label for="serial">Serial:</label>
                         <input type="text" class="form-control" id="serial" name="serial" value="{{ detalle_equipo['serial'] }}">
                     </div>
-                {% endif %}
             {% endif %}
             {% if tipo_equipo == 'unidad' %}
-                {% if detalle_equipo['ram'] %}
                     <div class="form-group">
                         <label for="ram">RAM:</label>
                         <input type="text" class="form-control" id="ram" name="ram" value="{{ detalle_equipo['ram'] }}">
                     </div>
-                {% endif %}
-                {% if detalle_equipo['procesador'] %}
                     <div class="form-group">
                         <label for="procesador">Procesador:</label>
                         <input type="text" class="form-control" id="procesador" name="procesador" value="{{ detalle_equipo['procesador'] }}">
                     </div>
-                {% endif %}
-                {% if detalle_equipo['almc'] %}
                     <div class="form-group">
                         <label for="almc">Almacenamiento:</label>
                         <input type="text" class="form-control" id="almc" name="almc" value="{{ detalle_equipo['almc'] }}">
                     </div>
-                {% endif %}
-                {% if detalle_equipo['perif'] %}
                     <div class="form-group">
                         <label for="perifericos">Periféricos:</label>
                         <input type="text" class="form-control" id="perif" name="perif" value="{{ detalle_equipo['perif'] }}">
                     </div>
-                {% endif %}
-                {% if detalle_equipo['numsello'] %}
                     <div class="form-group">
                         <label for="numsello">Número de Sello:</label>
                         <input type="text" class="form-control" id="numsello" name="numsello" value="{{ detalle_equipo['numsello'] }}">
                     </div>
-                {% endif %}
-                {% if detalle_equipo['numproducto'] %}
                     <div class="form-group">
                         <label for="numproducto">Número de Producto:</label>
                         <input type="text" class="form-control" id="numproducto" name="numproducto" value="{{ detalle_equipo['numproducto'] }}">
                     </div>
-                {% endif %}
-                {% if detalle_equipo['tipoimpresion'] %}
                     <div class="form-group">
                         <label for="tipoimpresion">Tipo de Impresión:</label>
                         <input type="text" class="form-control" id="tipoimpresion" name="tipoimpresion" value="{{ detalle_equipo['tipoimpresion'] }}">
                     </div>
-                {% endif %}
-                {% if detalle_equipo['cantidad'] %}
                     <div class="form-group">
                         <label for="cantidad">Cantidad:</label>
                         <input type="text" class="form-control" id="cantidad" name="cantidad" value="{{ detalle_equipo['cantidad'] }}">
                     </div>
-                {% endif %}
             {% endif %}
             {% if tipo_equipo == 'celular' %}
-                {% if detalle_equipo['imei1'] %}
                     <div class="form-group">
                         <label for="imei1">IMEI 1:</label>
                         <input type="text" class="form-control" id="imei1" name="imei1" value="{{ detalle_equipo['imei1'] }}">
                     </div>
-                {% endif %}
-                {% if detalle_equipo['imei2'] %}
                     <div class="form-group">
                         <label for="imei2">IMEI 2:</label>
                         <input type="text" class="form-control" id="imei2" name="imei2" value="{{ detalle_equipo['imei2'] }}">
                     </div>
-                {% endif %}
                 
-                {% if detalle_equipo['ntelefono'] %}
                     <div class="form-group">
                         <label for="ntelefono">N° Telefono:</label>
                         <input type="text" class="form-control" id="ntelefono" name="ntelefono" value="{{ detalle_equipo['ntelefono'] }}">
                     </div>
-                {% endif %}
             {% endif %}
             <div class="form-group">
                 <label for="observaciones">Observaciones:</label>
@@ -186,6 +158,7 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='logout_timeout.js') }}"></script>
 </body>
 
 </html>
