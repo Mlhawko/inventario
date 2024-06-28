@@ -46,6 +46,7 @@ server = config.get('database', 'server')
 db = config.get('database', 'db')
 user = config.get('database', 'user')
 password = config.get('database', 'password')
+ruta = config.get('ruta', 'ruta')
 ###
 #Conexion a base de datos-------------------------------
 try:
@@ -2174,5 +2175,5 @@ WHERE
 ###############################
 
 if __name__ == '__main__':
-    app.run(host="192.168.200.212", port=5000)
+    app.run(host=ruta, port=5000)
 
