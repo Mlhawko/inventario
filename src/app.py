@@ -14,27 +14,38 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
+import configparser
+import sys
 
 
 
 
 
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates', static_folder='static')
 
 app.config['SECRET_KEY'] = 'chf24'
-app.config['DEBUG'] = True
 
 
+if getattr(sys, 'frozen', False):
+    config_file = os.path.join(os.path.dirname(sys.executable), 'config.ini')
+else:
+    config_file = os.path.join(os.path.dirname(__file__), 'config.ini')
 
 
-#---------------------------------------------------------
+if not os.path.exists(config_file):
+    print(f'Error: El archivo {config_file} no encontrado')
+    exit(1)
 
-server = 'CHFNB239\\SQLEXPRESS'
-db = 'TestDB'
-user = 'sa'
-password = 'Chilefilms23'
 
+config = configparser.ConfigParser()
+config.read(config_file)
+
+
+server = config.get('database', 'server')
+db = config.get('database', 'db')
+user = config.get('database', 'user')
+password = config.get('database', 'password')
 ###
 #Conexion a base de datos-------------------------------
 try:
@@ -53,7 +64,7 @@ def obtener_conexion():
 
     try:
         conexion = pyodbc.connect(
-            'DRIVER={ODBC Driver 17 for SQL Server};'
+            'DRIVER={SQL Server};'
             f'SERVER={server};'
             f'DATABASE={db};'
             f'UID={user};'
@@ -78,10 +89,9 @@ def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 def validate_user(email, password):
-    hashed_password = hash_password(password)
     conexion = obtener_conexion()
     cursor = conexion.cursor()
-    cursor.execute("SELECT * FROM Usuarios WHERE usuarios_correo = ? AND usuarios_contraseña = ?", (email, hashed_password))
+    cursor.execute("SELECT * FROM Usuarios WHERE usuarios_correo = ? AND usuarios_contraseña = ?", (email, password))
     user = cursor.fetchone()
     conexion.close()
     return user
@@ -113,8 +123,6 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for('login'))
-
-
 
 
 #################################################
@@ -183,26 +191,42 @@ def index():
     try:
         search_term = request.form.get('search_term', '')
 
-        query ='''
-            SELECT DISTINCT
+        # Primera consulta: obtener los detalles de todas las personas
+        persona_query = '''
+            SELECT
                 persona.id,
                 persona.nombres,
                 persona.apellidos,
                 persona.correo,
                 persona.rut,
                 persona.dv,
-                area.nombre AS area_nombre,
-                tipoequipo.nombre AS tipo_nombre,
-                ISNULL(unidad.nombre_e, '') AS nombre_unidad,
-                ISNULL(celular.nombre, '') AS nombre_celular,
-                equipo.id AS equipo_id
+                area.nombre AS area_nombre
             FROM
                 persona
             INNER JOIN
                 area ON persona.area_id = area.id
-            LEFT JOIN
-                asignacion_equipo ON persona.id = asignacion_equipo.persona_id
-            LEFT JOIN
+            WHERE
+                persona.nombres LIKE ? OR
+                persona.apellidos LIKE ? OR
+                persona.correo LIKE ? OR
+                persona.rut LIKE ? OR
+                area.nombre LIKE ?
+        '''
+
+        cursor.execute(persona_query, ('%' + search_term + '%',) * 5)
+        personas_rows = cursor.fetchall()
+
+        # Segunda consulta: obtener los equipos asignados (incluyendo los devueltos) para cada persona
+        equipo_query = '''
+            SELECT
+                asignacion_equipo.persona_id,
+                equipo.id AS equipo_id,
+                tipoequipo.nombre AS tipo_nombre,
+                ISNULL(unidad.nombre_e, '') AS nombre_unidad,
+                ISNULL(celular.nombre, '') AS nombre_celular
+            FROM
+                asignacion_equipo
+            INNER JOIN
                 equipo ON asignacion_equipo.equipo_id = equipo.id
             LEFT JOIN
                 unidad ON equipo.unidad_id = unidad.id
@@ -210,55 +234,47 @@ def index():
                 celular ON equipo.celular_id = celular.id
             LEFT JOIN
                 tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
-
             WHERE
                 asignacion_equipo.fecha_devolucion IS NULL
-                    AND (
-                                persona.nombres LIKE ? OR
-                                persona.apellidos LIKE ? OR
-                                persona.correo LIKE ? OR
-                                persona.rut LIKE ? OR
-                                area.nombre LIKE ? OR
-                                tipoequipo.nombre LIKE ? OR
-                                unidad.nombre_e LIKE ? OR
-                                celular.nombre LIKE ?
-                            )
-                '''
 
-        cursor.execute(query, ('%' + search_term + '%',) * 8)  # Aplicar el término de búsqueda a cada campo
+        '''
 
-
-        rows = cursor.fetchall()
+        cursor.execute(equipo_query)
+        equipos_rows = cursor.fetchall()
         cursor.close()
 
+        # Procesar los datos para la vista
         personas = {}
-        for row in rows:
+        for row in personas_rows:
             persona_id = row.id
-            if persona_id not in personas:
-                personas[persona_id] = {
-                    'id': row.id,
-                    'nombres': row.nombres,
-                    'apellidos': row.apellidos,
-                    'correo': row.correo,
-                    'rut': row.rut,
-                    'dv': row.dv,
-                    'area_nombre': row.area_nombre,
-                    'equipos_asignados': []
-                }
-            equipo_id = row.equipo_id
-            equipo = {
-                'equipo_id': row.equipo_id,
-                'nombre': row.nombre_unidad if row.nombre_unidad else row.nombre_celular,
-                'tipoequipo': row.tipo_nombre
+            personas[persona_id] = {
+                'id': row.id,
+                'nombres': row.nombres,
+                'apellidos': row.apellidos,
+                'correo': row.correo,
+                'rut': row.rut,
+                'dv': row.dv,
+                'area_nombre': row.area_nombre,
+                'equipos_asignados': []
             }
-            if equipo['nombre']:
-                personas[persona_id]['equipos_asignados'].append(equipo)
 
-        return render_template('index.html', personas=list(personas.values()), search_term=search_term, welcome_message=welcome_message, login_time=session.get('login_time'),persona_id=persona_id, equipo_id=equipo_id)
+        for row in equipos_rows:
+            persona_id = row.persona_id
+            if persona_id in personas:
+                equipo = {
+                    'equipo_id': row.equipo_id,
+                    'nombre': row.nombre_unidad if row.nombre_unidad else row.nombre_celular,
+                    'tipoequipo': row.tipo_nombre
+                }
+                if equipo['nombre']:
+                    personas[persona_id]['equipos_asignados'].append(equipo)
+
+        return render_template('index.html', personas=list(personas.values()), search_term=search_term, welcome_message=welcome_message, login_time=session.get('login_time'))
     except pyodbc.Error as ex:
-        print('Error al obtener los datos: {ex}')
+        print(f'Error al obtener los datos: {ex}')
         flash('Error al cargar la página de asignación', 'error')
         return redirect(url_for('index'))
+
 #--------------------------------------------------------
 # CRUD Persona
 @app.route('/listar_personas', methods=['GET', 'POST'])
@@ -300,11 +316,11 @@ def agregar_persona():
             is_duplicate_comb, is_duplicate_email = verificar_duplicado_persona(nombres, apellidos, correo)
             
             if is_duplicate_comb:
-                flash('La combinación de nombre, apellido y correo ya existe en la base de datos', 'error')
+                flash('La combinación de nombre, apellido o correo ya existe en la base de datos', 'a_persona_error')
                 return render_template('agregar_persona.html', nombres=nombres, apellidos=apellidos, correo=correo, rut=rut, dv=dv, area_id=area_id, areas=areas)
             
             if is_duplicate_email:
-                flash('El correo ya existe en la base de datos', 'error')
+                flash('El correo ya existe en la base de datos', 'a_persona_error')
                 return render_template('agregar_persona.html', nombres=nombres, apellidos=apellidos, correo=correo, rut=rut, dv=dv, area_id=area_id, areas=areas)
 
             cursor = conexion.cursor()
@@ -315,7 +331,7 @@ def agregar_persona():
             return redirect(url_for('listar_personas'))
         except pyodbc.Error as ex:
             print(ex)
-            flash('Ocurrió un error al agregar la persona', 'error')
+            flash('Ocurrió un error al agregar la persona', 'a_persona_error')
             return render_template('agregar_persona.html', nombres=nombres, apellidos=apellidos, correo=correo, rut=rut, dv=dv, area_id=area_id, areas=areas)
 
     return render_template('agregar_persona.html', areas=areas)
@@ -850,7 +866,7 @@ def asignar_equipo():
 
         # Verificación de duplicados en el backend
         if len(equipo_ids) != len(set(equipo_ids)):
-            flash('No se pueden asignar equipos duplicados.', 'error')
+            flash('No se pueden asignar equipos duplicados.', 'asignar_equipo_error')
             return redirect(url_for('asignar_equipo', persona_id=persona_id))
 
         # Verificar que el archivo es un PDF
@@ -862,7 +878,7 @@ def asignar_equipo():
             try:
                 for equipo_id in equipo_ids:
                     if not equipo_id:  # Verificar que equipo_id no esté vacío
-                        flash('Todos los campos de equipo deben estar seleccionados.', 'error')
+                        flash('Todos los campos de equipo deben estar seleccionados.', 'asignar_equipo_error')
                         return redirect(url_for('asignar_equipo', persona_id=persona_id))
 
                     # Verificar que el equipo_id existe en la tabla equipo
@@ -870,7 +886,7 @@ def asignar_equipo():
                     equipo_existe = cursor.fetchone()[0]
                     
                     if equipo_existe == 0:
-                        flash(f'El equipo con ID {equipo_id} no existe.', 'error')
+                        flash(f'El equipo con ID {equipo_id} no existe.', 'asignar_equipo_error')
                         return redirect(url_for('asignar_equipo', persona_id=persona_id))
 
                     # Inserción en asignacion_equipo
@@ -884,16 +900,16 @@ def asignar_equipo():
                     cursor.execute("UPDATE equipo SET estadoequipo_id = 2 WHERE id = ?", (equipo_id,))
                     conexion.commit()
 
-                flash('Equipos asignados correctamente', 'success')
+                flash('Equipos asignados correctamente', 'asignar_equipo_success')
                 return redirect(url_for('index'))
             except pyodbc.Error as ex:
                 print(f'Error al asignar el equipo: {ex}')
-                flash('Error al asignar los equipos', 'error')
-                return redirect(url_for('index'))
+                flash('Error al asignar los equipos', 'asignar_equipo_error')
+                return redirect(url_for('asignar_equipo'))
             finally:
                 cursor.close()
         else:
-            flash('El archivo debe ser un PDF', 'error')
+            flash('Porfavor verifique el archivo PDF', 'asignar_equipo_error')
             return redirect(url_for('asignar_equipo', persona_id=persona_id))
 
     else:
@@ -2158,5 +2174,5 @@ WHERE
 ###############################
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="192.168.200.212", port=5000)
 

@@ -47,6 +47,24 @@
     <div class="container mt-5">
         <form action="{{ url_for('agregar_persona') }}" method="POST" class="custom-form" id="agregarPersonaForm">
             <h3 class="mb-4">Agregar Persona</h3>
+            <div class="container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="alert-container mt-3">
+                            {% for category, message in messages %}
+                                {% if 'a_persona_error' in category %}
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
             <div class="form-group">
                 <label for="nombres">Nombres:</label>
                 <input type="text" class="form-control" id="nombres" name="nombres" maxlength="99" value="{{ nombres }}" required>
