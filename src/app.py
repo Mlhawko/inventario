@@ -3,11 +3,11 @@ from functools import wraps
 import io
 import os
 import pyodbc
-from flask import Flask, flash, make_response, redirect, render_template, request, send_file, session, url_for, send_from_directory, jsonify
+from flask import Flask, flash, make_response, redirect, render_template, request, send_file, session, url_for, send_from_directory, jsonify, g
 import datetime
 from werkzeug.utils import secure_filename
 from waitress import serve
-from fpdf import FPDF
+from fpdf import FPDF, XPos, YPos
 from openpyxl import Workbook
 import hashlib
 from reportlab.lib.pagesizes import letter
@@ -127,6 +127,7 @@ def logout():
 
 
 #################################################
+
 
 
 def verificar_duplicado(tabla, columnas_valores):
@@ -732,7 +733,7 @@ def listar_areas():
             return render_template('listar_areas.html', areas=areas)
         except pyodbc.Error as ex:
             print(ex)
-            flash('Ocurrió un error al listar las áreas', 'error')
+            flash('Ocurrió un error al listar las áreas', 'area_error')
             return redirect(url_for('index'))
     elif request.method == 'POST':
         id_area = request.form.get('id_area')
@@ -742,10 +743,10 @@ def listar_areas():
             cursor.execute("UPDATE area SET nombre = ? WHERE id = ?", (nombre, id_area))
             conexion.commit()
             cursor.close()
-            flash('Área actualizada correctamente', 'success')
+            flash('Área actualizada correctamente', 'area_success')
         except pyodbc.Error as ex:
             print(ex)
-            flash('Error al actualizar el área', 'error')
+            flash('Error al actualizar el área', 'area_error')
         return redirect(url_for('listar_areas'))
 
 @app.route('/crear_area', methods=['GET', 'POST'])
@@ -758,11 +759,11 @@ def crear_area():
             cursor.execute("INSERT INTO area (nombre) VALUES (?)", (nombre,))
             conexion.commit()
             cursor.close()
-            flash('Área creada correctamente', 'success')
+            flash('Área creada correctamente', 'area_success')
             return redirect(url_for('listar_areas'))
         except pyodbc.Error as ex:
             print(ex)
-            flash('Error al crear el área', 'error')
+            flash('Error al crear el área', 'area_error')
             return redirect(url_for('listar_areas'))
     return render_template('listar_areas.html')
 
@@ -776,11 +777,11 @@ def eliminar_area(id):
             cursor.execute("DELETE FROM area WHERE id = ?", (id,))
             conexion.commit()
             cursor.close()
-            flash('Área eliminada correctamente', 'success')
+            flash('Área eliminada correctamente', 'area_success')
             return redirect(url_for('listar_areas'))
         except pyodbc.Error as ex:
             print(ex)
-            flash('Error al eliminar el área', 'error')
+            flash('Error al eliminar el área', 'area_error')
             return redirect(url_for('listar_areas'))
     return 'Método no permitido'
 #-----------------------------------------------------------------
@@ -798,12 +799,12 @@ def crud_tipos_equipos():
                     cursor.execute("INSERT INTO tipoequipo (nombre) VALUES (?)", (nombre,))
                     conexion.commit()
                     cursor.close()
-                    flash('El tipo de equipo ha sido agregado correctamente', 'success')
+                    flash('El tipo de equipo ha sido agregado correctamente', 'tiposE_success')
                 except pyodbc.Error as ex:
                     print(ex)
-                    flash('Ocurrió un error al agregar el tipo de equipo', 'error')
+                    flash('Ocurrió un error al agregar el tipo de equipo', 'tiposE_error')
             else:
-                flash('Por favor, ingrese un nombre para el tipo de equipo', 'error')
+                flash('Por favor, ingrese un nombre para el tipo de equipo', 'tiposE_error')
         elif 'eliminar' in request.form:
             tipo_equipo_id = request.form.get('eliminar')
             try:
@@ -811,10 +812,10 @@ def crud_tipos_equipos():
                 cursor.execute("DELETE FROM tipoequipo WHERE id = ?", (tipo_equipo_id,))
                 conexion.commit()
                 cursor.close()
-                flash('El tipo de equipo ha sido eliminado correctamente', 'success')
+                flash('El tipo de equipo ha sido eliminado correctamente', 'tiposE_success')
             except pyodbc.Error as ex:
                 print(ex)
-                flash('Ocurrió un error al eliminar el tipo de equipo', 'error')
+                flash('Ocurrió un error al eliminar el tipo de equipo', 'tiposE_error')
         elif 'editar' in request.form:
             tipo_equipo_id = request.form['editar']
             nuevo_nombre = request.form['nombre_editado']
@@ -824,12 +825,12 @@ def crud_tipos_equipos():
                     cursor.execute("UPDATE tipoequipo SET nombre = ? WHERE id = ?", (nuevo_nombre, tipo_equipo_id))
                     conexion.commit()
                     cursor.close()
-                    flash('El tipo de equipo ha sido actualizado correctamente', 'success')
+                    flash('El tipo de equipo ha sido actualizado correctamente', 'tiposE_success')
                 except pyodbc.Error as ex:
                     print(ex)
-                    flash('Ocurrió un error al actualizar el tipo de equipo', 'error')
+                    flash('Ocurrió un error al actualizar el tipo de equipo', 'tiposE_error')
             else:
-                flash('Por favor, ingrese un nuevo nombre para el tipo de equipo', 'error')
+                flash('Por favor, ingrese un nuevo nombre para el tipo de equipo', 'tiposE_error')
 
     tipos_equipos = obtener_tipos_equipo()
 
@@ -958,13 +959,13 @@ def devolver_equipo(equipo_id):
 
     if request.method == 'POST':
         if 'archivo_pdf' not in request.files:
-            flash('No se ha seleccionado ningún archivo', 'error')
+            flash('No se ha seleccionado ningún archivo', 'devolver_error')
             return redirect(request.url)
 
         file = request.files['archivo_pdf']
 
         if file.filename == '':
-            flash('No se ha seleccionado ningún archivo', 'error')
+            flash('No se ha seleccionado ningún archivo', 'devolver_error')
             return redirect(request.url)
 
         if file and allowed_file(file.filename):
@@ -988,11 +989,11 @@ def devolver_equipo(equipo_id):
                 persona_id = obtener_persona_id_asociada(equipo_id)
 
 
-                flash('Equipo devuelto correctamente', 'success')
+                flash('Equipo devuelto correctamente', 'devolver_success')
                 return redirect(url_for('detalle_persona', persona_id=persona_id))
             except pyodbc.Error as ex:
                 print('Error al devolver el equipo: {ex}')
-                flash('Error al devolver el equipo', 'error')
+                flash('Error al devolver el equipo', 'devolver_error')
                 return redirect(url_for('devolver_equipo', equipo_id=equipo_id))
             finally:
                 cursor.close()
@@ -1095,7 +1096,7 @@ def detalle_persona(persona_id):
         """, (persona_id,))
         historial_completo = cursor.fetchall()
 
-        # Obtener la lista de equipos mantenidos por la persona
+        # Obtener la lista de equipos mantenidos por la persona (solo los asignados actualmente)
         cursor.execute("""
             SELECT
                 equipo.id,
@@ -1108,6 +1109,7 @@ def detalle_persona(persona_id):
             LEFT JOIN celular ON equipo.celular_id = celular.id
             LEFT JOIN tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
             WHERE asignacion_equipo.persona_id = ?
+            AND asignacion_equipo.fecha_devolucion IS NULL
         """, (persona_id,))
         equipos_mantenidos = cursor.fetchall()
 
@@ -1116,9 +1118,10 @@ def detalle_persona(persona_id):
         return render_template('detalle_persona.html', persona=persona, historial_completo=historial_completo, equipos_mantenidos=equipos_mantenidos)
     
     except pyodbc.Error as ex:
-        print('Error al obtener los detalles de la persona: {ex}')
+        print(f'Error al obtener los detalles de la persona: {ex}')
         flash('Error al obtener los detalles de la persona', 'error')
         return redirect(url_for('index'))
+
 
 
 
@@ -1885,8 +1888,6 @@ def exportar_pdf():
                 persona.nombres, 
                 persona.apellidos, 
                 persona.correo, 
-                persona.rut, 
-                persona.dv, 
                 area.nombre AS area_nombre,
                 tipoequipo.nombre AS tipo_nombre,
                 ISNULL(unidad.nombre_e, '') AS nombre_unidad, 
@@ -1912,7 +1913,7 @@ def exportar_pdf():
                     persona.nombres LIKE ? OR
                     persona.apellidos LIKE ? OR
                     persona.correo LIKE ? OR
-                    persona.rut LIKE ? OR
+                    
                     area.nombre LIKE ? OR
                     tipoequipo.nombre LIKE ? OR
                     unidad.nombre_e LIKE ? OR
@@ -1921,7 +1922,7 @@ def exportar_pdf():
         '''
 
         cursor = conexion.cursor()
-        cursor.execute(query, ('%' + search_term + '%',) * 8)  # Aplicar el término de búsqueda a cada campo
+        cursor.execute(query, ('%' + search_term + '%',) * 7)  # Aplicar el término de búsqueda a cada campo
         rows = cursor.fetchall()
         cursor.close()
 
@@ -1933,12 +1934,12 @@ def exportar_pdf():
         elements = []
 
         # Datos para la tabla PDF
-        data = [['Rut', 'Nombre', 'Apellido', 'Correo', 'Área', 'Equipos Asignados']]
+        data = [['Nombre', 'Apellido', 'Correo', 'Área', 'Equipos Asignados']]
 
         # Recorrer las filas seleccionadas y agregar los datos a la tabla
         for row in rows:
             equipos_asignados = ', '.join([f"{row.nombre_unidad if row.nombre_unidad else row.nombre_celular} - {row.tipo_nombre}"])
-            data.append([row.rut, row.nombres, row.apellidos, row.correo, row.area_nombre, equipos_asignados])
+            data.append([row.nombres, row.apellidos, row.correo, row.area_nombre, equipos_asignados])
 
         # Crear la tabla PDF
         table = Table(data)
@@ -1977,9 +1978,9 @@ class PDF(FPDF):
         left_margin = 20
         self.set_left_margin(left_margin)
         self.set_x(left_margin)
-        self.image('C:/ProyectosPython/Inventario/src/static/logochf.png', x=150, y=12, w=40)
-        self.set_font('Arial', 'B', 25)
-        self.cell(0, 40, 'Carta de Responsabilidad', ln=True, align='L')
+        self.image('C:/ProyectosPython/Inventario/src/static/logochf.png', x=140, y=12, w=50)
+        self.set_font('Helvetica', 'B', 25)
+        self.cell(0, 40, 'Carta de Devolucion', new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
 
     def footer(self):
         self.set_y(-50)
@@ -1991,84 +1992,81 @@ class PDF(FPDF):
         cell_width = page_width / 3
 
 
-        self.cell(cell_width, 8, '____________________', 0, 0, 'C')
-        self.cell(cell_width, 8, '____________________', 0, 0, 'C')
-        self.cell(cell_width, 8, '____________________', 0, 1, 'C')
-
-        self.set_font('Arial', 'B', 8)
-        self.cell(cell_width, 5, 'FIRMA DEL USUARIO', 0, 0, 'C')
-        self.cell(cell_width, 5, 'GASTON MARILEO', 0, 0, 'C')
-        self.cell(cell_width, 5, 'CARLOS AHUMADA', 0, 1, 'C')
-
-        self.set_font('Arial', 'B', 6)
-        self.cell(cell_width, 5, 'RESPONSABLE', 0, 0, 'C')
-        self.cell(cell_width, 5, 'JEFE SISTEMA TI', 0, 0, 'C')
-        self.cell(cell_width, 5, 'ENCARGADO SOPORTE TI', 0, 1, 'C')
+        self.cell(cell_width, 8, '____________________', 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+        self.cell(cell_width, 8, '____________________', 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+        self.cell(cell_width, 8, '____________________', 0, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+        self.set_font('Helvetica', 'B', 12)
+        self.cell(cell_width, 5, 'FIRMA DEL USUARIO', 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+        self.cell(cell_width, 5, 'GASTON MARILEO', 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+        self.cell(cell_width, 5, 'CARLOS AHUMADA', 0, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+        self.set_font('Helvetica', 'B', 8)
+        self.cell(cell_width, 5, 'RESPONSABLE', 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+        self.cell(cell_width, 5, 'JEFE SISTEMA TI', 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+        self.cell(cell_width, 5, 'ENCARGADO SOPORTE TI', 0, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
 
         # Línea de firma
         
 
-@app.route('/exportar_pdf/<int:persona_id>', methods=['GET', 'POST'])
-def exportar_pdf_persona(persona_id):
+@app.route('/exportar_pdf/<int:persona_id>/<int:equipo_id>', methods=['GET'])
+def exportar_pdf_persona(persona_id, equipo_id):
     try:
         query = '''
             SELECT DISTINCT 
-    persona.id, 
-    persona.nombres, 
-    persona.apellidos, 
-    persona.correo, 
-    persona.rut, 
-    persona.dv, 
-    area.nombre AS area_nombre,
-    tipoequipo.nombre AS tipo_nombre,
-    ISNULL(unidad.nombre_e, '') AS nombre_unidad, 
-    ISNULL(celular.nombre, '') AS nombre_celular, 
-    equipo.id AS equipo_id,
-    unidad.id AS unidad_id, 
-    unidad.marca AS marca,
-    unidad.modelo AS modelo,
-    unidad.ram AS ram,
-    unidad.procesador AS procesador,
-    unidad.almc AS almc,
-    unidad.perif AS perif,
-    unidad.numsello AS numsello,
-    unidad.serial AS serial,
-    unidad.numproducto AS numproducto,
-    unidad.tipoimpresion AS tipoimpresion,
-    unidad.cantidad AS cantidad,
-    celular.id AS celular_id,
-    celular.marca AS marca_celular,
-    celular.modelo AS modelo_celular,
-    celular.serial AS serial_celular,
-    celular.imei1 AS imei1,
-    celular.imei2 AS imei2,
-    celular.ntelefono AS ntelefono
-FROM 
-    persona
-INNER JOIN 
-    area ON persona.area_id = area.id
-LEFT JOIN 
-    asignacion_equipo ON persona.id = asignacion_equipo.persona_id
-LEFT JOIN 
-    equipo ON asignacion_equipo.equipo_id = equipo.id
-LEFT JOIN 
-    unidad ON equipo.unidad_id = unidad.id
-LEFT JOIN 
-    celular ON equipo.celular_id = celular.id
-LEFT JOIN 
-    tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
-WHERE
-    persona.id = ? 
-
+                persona.id, 
+                persona.nombres, 
+                persona.apellidos, 
+                persona.correo, 
+                persona.rut, 
+                persona.dv, 
+                area.nombre AS area_nombre,
+                tipoequipo.nombre AS tipo_nombre,
+                ISNULL(unidad.nombre_e, '') AS nombre_unidad, 
+                ISNULL(celular.nombre, '') AS nombre_celular, 
+                equipo.id AS equipo_id,
+                unidad.id AS unidad_id, 
+                unidad.marca AS marca,
+                unidad.modelo AS modelo,
+                unidad.ram AS ram,
+                unidad.procesador AS procesador,
+                unidad.almc AS almc,
+                unidad.perif AS perif,
+                unidad.numsello AS numsello,
+                unidad.serial AS serial,
+                unidad.numproducto AS numproducto,
+                unidad.tipoimpresion AS tipoimpresion,
+                unidad.cantidad AS cantidad,
+                celular.id AS celular_id,
+                celular.marca AS marca_celular,
+                celular.modelo AS modelo_celular,
+                celular.serial AS serial_celular,
+                celular.imei1 AS imei1,
+                celular.imei2 AS imei2,
+                celular.ntelefono AS ntelefono
+            FROM 
+                persona
+            INNER JOIN 
+                area ON persona.area_id = area.id
+            LEFT JOIN 
+                asignacion_equipo ON persona.id = asignacion_equipo.persona_id
+            LEFT JOIN 
+                equipo ON asignacion_equipo.equipo_id = equipo.id
+            LEFT JOIN 
+                unidad ON equipo.unidad_id = unidad.id
+            LEFT JOIN 
+                celular ON equipo.celular_id = celular.id
+            LEFT JOIN 
+                tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
+            WHERE
+                persona.id = ? AND equipo.id = ?
         '''
 
         cursor = conexion.cursor()
-        cursor.execute(query, (persona_id,))
+        cursor.execute(query, (persona_id, equipo_id))
         rows = cursor.fetchall()
         cursor.close()
 
         if not rows:
-            flash('No se encontraron datos para la persona seleccionada', 'error')
+            flash('No se encontraron datos para el equipo seleccionado', 'error')
             return redirect(url_for('index'))
 
         buffer = io.BytesIO()
@@ -2081,77 +2079,79 @@ WHERE
         pdf.set_line_width(0.5)
         pdf.rect(10, 10, 190, 270)
 
-        left_margin = 20  
-
+        left_margin = 20
 
         nombre = f"{rows[0].nombres} {rows[0].apellidos}"
         area = rows[0].area_nombre
-        pdf.set_font('Helvetica', 'B', 12)
+        pdf.set_font('Helvetica', 'B', 16)
         pdf.set_x(left_margin)
-        pdf.cell(0, 10, f'Se entrega a Sr/a: {nombre}', ln=True, align='L')
+        pdf.cell(0, 10, f'Se entrega a Sr/a: {nombre}', new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
         pdf.set_x(left_margin)
-        pdf.set_font('Helvetica', 'B', 8)
-        pdf.cell(0, 2, f'{area}', ln=True, align='L')
+        pdf.set_font('Helvetica', 'B', 14)
+        pdf.cell(0, 2, f'{area}', new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
 
         # Espacio
-        pdf.cell(0, 10, '', ln=True)
-        pdf.set_font('Helvetica', '', 12)
+        pdf.cell(0, 10, '', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_font('Helvetica', '', 16)
 
-        # Agregar datos de los equipos
+        # Agregar datos del equipo
         for row in rows:
             equipo_nombre = row.nombre_unidad if row.nombre_unidad else row.nombre_celular
             tipo_nombre = row.tipo_nombre
             if equipo_nombre:
-                pdf.cell(0, 5, f"Nombre del equipo: {equipo_nombre}", ln=True, align='L')
+                pdf.cell(0, 5, f"Nombre del equipo: {equipo_nombre}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
             if tipo_nombre:
-                pdf.cell(0, 5, f"Tipo de equipo: {tipo_nombre}", ln=True, align='L')
+                pdf.cell(0, 5, f"Tipo de equipo: {tipo_nombre}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
 
             # Agregar otros atributos del equipo si están presentes
             if row.unidad_id:
                 if row.marca:
-                    pdf.cell(0, 5, f"Marca: {row.marca}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Marca: {row.marca}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.modelo:
-                    pdf.cell(0, 5, f"Modelo: {row.modelo}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Modelo: {row.modelo}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.ram:
-                    pdf.cell(0, 5, f"RAM: {row.ram}", ln=True, align='L')
+                    pdf.cell(0, 5, f"RAM: {row.ram}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.procesador:
-                    pdf.cell(0, 5, f"Procesador: {row.procesador}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Procesador: {row.procesador}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.almc:
-                    pdf.cell(0, 5, f"Almacenamiento: {row.almc}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Almacenamiento: {row.almc}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.perif:
-                    pdf.cell(0, 5, f"Periféricos: {row.perif}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Periféricos: {row.perif}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.numsello:
-                    pdf.cell(0, 5, f"Número de Sello: {row.numsello}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Número de Sello: {row.numsello}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.serial:
-                    pdf.cell(0, 5, f"Serial: {row.serial}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Serial: {row.serial}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.numproducto:
-                    pdf.cell(0, 5, f"Número de Producto: {row.numproducto}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Número de Producto: {row.numproducto}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.tipoimpresion:
-                    pdf.cell(0, 5, f"Tipo de Impresión: {row.tipoimpresion}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Tipo de Impresión: {row.tipoimpresion}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.cantidad:
-                    pdf.cell(0, 5, f"Cantidad: {row.cantidad}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Cantidad: {row.cantidad}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
             if row.celular_id:
                 if row.marca_celular:
-                    pdf.cell(0, 5, f"Marca del Celular: {row.marca_celular}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Marca del Celular: {row.marca_celular}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.modelo_celular:
-                    pdf.cell(0, 5, f"Modelo del Celular: {row.modelo_celular}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Modelo del Celular: {row.modelo_celular}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.serial_celular:
-                    pdf.cell(0, 5, f"Serial del Celular: {row.serial_celular}", ln=True, align='L')
+                    pdf.cell(0, 5, f"Serial del Celular: {row.serial_celular}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.imei1:
-                    pdf.cell(0, 5, f"IMEI 1: {row.imei1}", ln=True, align='L')
+                    pdf.cell(0, 5, f"IMEI 1: {row.imei1}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.imei2:
-                    pdf.cell(0, 5, f"IMEI 2: {row.imei2}", ln=True, align='L')
+                    pdf.cell(0, 5, f"IMEI 2: {row.imei2}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.ntelefono:
-                    pdf.cell(0, 5, f"Número de Teléfono: {row.ntelefono}", ln=True, align='L')
-            pdf.cell(0, 8, '', ln=True)  # Espacio entre equipos
+                    pdf.cell(0, 5, f"Número de Teléfono: {row.ntelefono}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+            pdf.cell(0, 8, '', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
         # Guardar el PDF en el buffer
         pdf.output(buffer)
 
+        nombre_archivo = f'carta_devolucion_{rows[0].nombres}_{rows[0].apellidos}.pdf'.replace(' ', '_')
+
+
         # Devolver el PDF como una respuesta
         buffer.seek(0)
         response = make_response(buffer.getvalue())
-        response.headers['Content-Disposition'] = 'attachment; filename=carta_responsabilidad.pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename={nombre_archivo}'
         response.headers['Content-Type'] = 'application/pdf'
 
         return response
@@ -2159,7 +2159,7 @@ WHERE
         print(f'Error al exportar a PDF: {ex}')
         flash('Error al exportar a PDF', 'error')
         return redirect(url_for('index'))
-
+#-------------------------------------------------------------------------------
 
 
 
