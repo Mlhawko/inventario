@@ -1,6 +1,7 @@
 
 from functools import wraps
 import io
+from io import BytesIO
 import os
 import pyodbc
 from flask import Flask, flash, make_response, redirect, render_template, request, send_file, session, url_for, send_from_directory, jsonify, g
@@ -191,8 +192,9 @@ def index():
 
     cursor = conexion.cursor()
     try:
-        search_term = request.form.get('search_term', '')
+        search_term = request.form.get('search_term', '').lower()
 
+        # Consulta para obtener las personas
         persona_query = '''
             SELECT
                 persona.id,
@@ -206,17 +208,12 @@ def index():
                 persona
             INNER JOIN
                 area ON persona.area_id = area.id
-            WHERE
-                persona.nombres LIKE ? OR
-                persona.apellidos LIKE ? OR
-                persona.correo LIKE ? OR
-                persona.rut LIKE ? OR
-                area.nombre LIKE ?
         '''
 
-        cursor.execute(persona_query, ('%' + search_term + '%',) * 5)
+        cursor.execute(persona_query)
         personas_rows = cursor.fetchall()
 
+        # Consulta para obtener los equipos asignados
         equipo_query = '''
             SELECT
                 asignacion_equipo.persona_id,
@@ -236,13 +233,13 @@ def index():
                 tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
             WHERE
                 asignacion_equipo.fecha_devolucion IS NULL
-                
         '''
 
         cursor.execute(equipo_query)
         equipos_rows = cursor.fetchall()
         cursor.close()
 
+        # Crear un diccionario para almacenar las personas y sus equipos asignados
         personas = {}
         for row in personas_rows:
             persona_id = row.id
@@ -257,6 +254,7 @@ def index():
                 'equipos_asignados': []
             }
 
+        # Agregar equipos asignados a las personas
         for row in equipos_rows:
             persona_id = row.persona_id
             if persona_id in personas:
@@ -265,14 +263,37 @@ def index():
                     'nombre': row.nombre_unidad if row.nombre_unidad else row.nombre_celular,
                     'tipoequipo': row.tipo_nombre
                 }
-                if equipo['nombre']:
-                    personas[persona_id]['equipos_asignados'].append(equipo)
+                personas[persona_id]['equipos_asignados'].append(equipo)
 
-        return render_template('index.html', personas=list(personas.values()), search_term=search_term, welcome_message=welcome_message, login_time=session.get('login_time'))
+        # Filtrar personas y equipos según el término de búsqueda
+        if search_term:
+            filtered_personas = {}
+            for persona_id, persona in personas.items():
+                # Buscar en campos de persona
+                if (search_term in persona['nombres'].lower() or
+                    search_term in persona['apellidos'].lower() or
+                    search_term in persona['correo'].lower() or
+                    search_term in persona['rut'].lower() or
+                    search_term in persona['area_nombre'].lower()):
+                    filtered_personas[persona_id] = persona
+                else:
+                    # Buscar en equipos asignados
+                    equipos_coincidencia = [
+                        equipo for equipo in persona['equipos_asignados']
+                        if search_term in equipo['nombre'].lower() or search_term in equipo['tipoequipo'].lower()
+                    ]
+                    if equipos_coincidencia:
+                        persona['equipos_asignados'] = equipos_coincidencia
+                        filtered_personas[persona_id] = persona
+        else:
+            filtered_personas = personas
+
+        return render_template('index.html', personas=list(filtered_personas.values()), search_term=search_term, welcome_message=welcome_message, login_time=session.get('login_time'))
     except pyodbc.Error as ex:
         print(f'Error al obtener los datos: {ex}')
         flash('Error al cargar la página de asignación', 'error')
         return redirect(url_for('index'))
+
 
 #--------------------------------------------------------
 # CRUD Persona
@@ -1465,7 +1486,6 @@ def exportar_excel():
     try:
         search_term = request.args.get('search_term', '')
         
-
         # Crear la consulta SQL con el término de búsqueda
         query = '''
             SELECT DISTINCT 
@@ -1509,14 +1529,12 @@ def exportar_excel():
         '''
 
         cursor = conexion.cursor()
-        cursor.execute(query, ('%' + search_term + '%',) * 8)  # Aplicar el término de búsqueda a cada campo
+        cursor.execute(query, ('%' + search_term + '%',) * 8)
         rows = cursor.fetchall()
         cursor.close()
 
-        # Crear un diccionario para almacenar los datos de las personas
         personas_dict = {}
 
-        # Recorrer las filas seleccionadas y agrupar los equipos por persona
         for row in rows:
             persona_id = row.id
             if persona_id not in personas_dict:
@@ -1537,19 +1555,15 @@ def exportar_excel():
             if equipo not in personas_dict[persona_id]['equipos_asignados']:
                 personas_dict[persona_id]['equipos_asignados'].append(equipo)
 
-        # Crear el libro de Excel y seleccionar la primera hoja
         wb = Workbook()
         ws = wb.active
 
-        # Añadir encabezados a la primera fila
         ws.append(['Rut', 'Nombre', 'Apellido', 'Correo', 'Área', 'Equipos Asignados'])
 
-        # Añadir filas de datos desde el diccionario de personas
         for persona in personas_dict.values():
             equipos_asignados = ', '.join([f"{equipo['nombre']} - {equipo['tipoequipo']}" for equipo in persona['equipos_asignados']])
             ws.append([persona['rut'], persona['nombres'], persona['apellidos'], persona['correo'], persona['area_nombre'], equipos_asignados])
 
-        # Ajustar el ancho de las columnas
         for col in ws.columns:
             max_length = 0
             for cell in col:
@@ -1558,15 +1572,11 @@ def exportar_excel():
             adjusted_width = (max_length + 2) * 1.2
             ws.column_dimensions[col[0].column_letter].width = adjusted_width
 
-        # Crear una respuesta con el archivo Excel adjunto
-        filename = "index.xlsx"
-        wb.save(filename)
-        with open(filename, 'rb') as file:
-            response = make_response(file.read())
-        response.headers['Content-Disposition'] = 'attachment; filename=index.xlsx'
-        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
 
-        return response
+        return send_file(output, attachment_filename="index.xlsx", as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     except Exception as ex:
         print('Error al exportar a Excel:', ex)
         flash('Error al exportar a Excel', 'error')
