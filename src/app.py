@@ -193,7 +193,6 @@ def index():
     try:
         search_term = request.form.get('search_term', '')
 
-        # Primera consulta: obtener los detalles de todas las personas
         persona_query = '''
             SELECT
                 persona.id,
@@ -218,7 +217,6 @@ def index():
         cursor.execute(persona_query, ('%' + search_term + '%',) * 5)
         personas_rows = cursor.fetchall()
 
-        # Segunda consulta: obtener los equipos asignados (incluyendo los devueltos) para cada persona
         equipo_query = '''
             SELECT
                 asignacion_equipo.persona_id,
@@ -238,14 +236,13 @@ def index():
                 tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
             WHERE
                 asignacion_equipo.fecha_devolucion IS NULL
-
+                
         '''
 
         cursor.execute(equipo_query)
         equipos_rows = cursor.fetchall()
         cursor.close()
 
-        # Procesar los datos para la vista
         personas = {}
         for row in personas_rows:
             persona_id = row.id
@@ -1992,9 +1989,9 @@ class PDF(FPDF):
         cell_width = page_width / 3
 
 
-        self.cell(cell_width, 8, '____________________', 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
-        self.cell(cell_width, 8, '____________________', 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
-        self.cell(cell_width, 8, '____________________', 0, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+        self.cell(cell_width, 8, '_____________', 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+        self.cell(cell_width, 8, '_____________', 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+        self.cell(cell_width, 8, '_____________', 0, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
         self.set_font('Helvetica', 'B', 12)
         self.cell(cell_width, 5, 'FIRMA DEL USUARIO', 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
         self.cell(cell_width, 5, 'GASTON MARILEO', 0, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
@@ -2085,9 +2082,9 @@ def exportar_pdf_persona(persona_id, equipo_id):
         area = rows[0].area_nombre
         pdf.set_font('Helvetica', 'B', 16)
         pdf.set_x(left_margin)
-        pdf.cell(0, 10, f'Se entrega a Sr/a: {nombre}', new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+        pdf.cell(0, 10, f'Se recibe de Sr/a: {nombre}', new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
         pdf.set_x(left_margin)
-        pdf.set_font('Helvetica', 'B', 14)
+        pdf.set_font('Helvetica', '', 14)
         pdf.cell(0, 2, f'{area}', new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
 
         # Espacio
@@ -2099,47 +2096,47 @@ def exportar_pdf_persona(persona_id, equipo_id):
             equipo_nombre = row.nombre_unidad if row.nombre_unidad else row.nombre_celular
             tipo_nombre = row.tipo_nombre
             if equipo_nombre:
-                pdf.cell(0, 5, f"Nombre del equipo: {equipo_nombre}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                pdf.cell(0, 6, f"Nombre del equipo: {equipo_nombre}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
             if tipo_nombre:
-                pdf.cell(0, 5, f"Tipo de equipo: {tipo_nombre}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                pdf.cell(0, 6, f"Tipo de equipo: {tipo_nombre}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
 
             # Agregar otros atributos del equipo si están presentes
             if row.unidad_id:
                 if row.marca:
-                    pdf.cell(0, 5, f"Marca: {row.marca}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Marca: {row.marca}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.modelo:
-                    pdf.cell(0, 5, f"Modelo: {row.modelo}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Modelo: {row.modelo}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.ram:
-                    pdf.cell(0, 5, f"RAM: {row.ram}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"RAM: {row.ram}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.procesador:
-                    pdf.cell(0, 5, f"Procesador: {row.procesador}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Procesador: {row.procesador}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.almc:
-                    pdf.cell(0, 5, f"Almacenamiento: {row.almc}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Almacenamiento: {row.almc}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.perif:
-                    pdf.cell(0, 5, f"Periféricos: {row.perif}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Periféricos: {row.perif}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.numsello:
-                    pdf.cell(0, 5, f"Número de Sello: {row.numsello}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Número de Sello: {row.numsello}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.serial:
-                    pdf.cell(0, 5, f"Serial: {row.serial}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Serial: {row.serial}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.numproducto:
-                    pdf.cell(0, 5, f"Número de Producto: {row.numproducto}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Número de Producto: {row.numproducto}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.tipoimpresion:
-                    pdf.cell(0, 5, f"Tipo de Impresión: {row.tipoimpresion}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Tipo de Impresión: {row.tipoimpresion}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.cantidad:
-                    pdf.cell(0, 5, f"Cantidad: {row.cantidad}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Cantidad: {row.cantidad}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
             if row.celular_id:
                 if row.marca_celular:
-                    pdf.cell(0, 5, f"Marca del Celular: {row.marca_celular}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Marca del Celular: {row.marca_celular}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.modelo_celular:
-                    pdf.cell(0, 5, f"Modelo del Celular: {row.modelo_celular}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Modelo del Celular: {row.modelo_celular}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.serial_celular:
-                    pdf.cell(0, 5, f"Serial del Celular: {row.serial_celular}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Serial del Celular: {row.serial_celular}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.imei1:
-                    pdf.cell(0, 5, f"IMEI 1: {row.imei1}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"IMEI 1: {row.imei1}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.imei2:
-                    pdf.cell(0, 5, f"IMEI 2: {row.imei2}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"IMEI 2: {row.imei2}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
                 if row.ntelefono:
-                    pdf.cell(0, 5, f"Número de Teléfono: {row.ntelefono}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
+                    pdf.cell(0, 6, f"Número de Teléfono: {row.ntelefono}", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='L')
             pdf.cell(0, 8, '', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
         # Guardar el PDF en el buffer
