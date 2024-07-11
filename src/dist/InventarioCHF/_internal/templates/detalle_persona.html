@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Detalle de la Persona</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .text-center {
+            text-align: center;
+        }
+
+        .fixed-navbar .container {
+            max-width: 1000px;
+        }
+
+        .fixed-navbar .navbar-brand img {
+            max-width: 150px;
+        }
+
+        .fixed-navbar .navbar-nav .nav-item .nav-link {
+            white-space: nowrap;
+        }
+
+        .fixed-navbar .dropdown-menu {
+            min-width: 200px;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .search-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        {% include 'menu.html' %}
+    </header>
+
+    <div class="container">
+        <h1 class="mb-4 text-center">Detalle de la Persona</h1>
+        
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="alert-container mt-3">
+                        {% for category, message in messages %}
+                            {% if 'devolver_success' in category %}
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <table class="table">
+                    <tr>
+                        <th>Nombre</th>
+                        <td>{{ persona.nombres }}</td>
+                    </tr>
+                    <tr>
+                        <th>Apellido</th>
+                        <td>{{ persona.apellidos }}</td>
+                    </tr>
+                    <tr>
+                        <th>Correo Electrónico</th>
+                        <td>{{ persona.correo }}</td>
+                    </tr>
+                    <tr>
+                        <th>RUT</th>
+                        <td>{{ persona.rut }}-{{ persona.dv }}</td>
+                    </tr>
+                </table>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h2>Equipos Asignados</h2>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <a href="{{ url_for('devolver_equipo', persona_id=persona.id) }}" class="btn btn-danger mb-4">Devolver Todos los Equipos</a>
+                    </div>
+                </div>
+                
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID del Equipo</th>
+                            <th>Nombre del Equipo</th>
+                            <th>Tipo</th>
+                            <th>Modelo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for equipo in equipos_mantenidos %}
+                        <tr>
+                            <td>{{ equipo.id }}</td>
+                            <td>{{ equipo.nombre_equipo }}</td>
+                            <td>{{ equipo.tipo_equipo }}</td>
+                            <td>{{ equipo.modelo_equipo }}</td>
+                            <td>
+                                <a href="{{ url_for('devolver_equipo', equipo_id=equipo.id) }}" class="btn btn-secondary mb-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-dash-circle" viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                        <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
+                                    </svg>
+                                    Devolución
+                                </a>
+                                <a href="{{ url_for('detalle_equipo', equipo_id=equipo.id) }}" class="btn btn-primary mb-2">
+                                    Detalle Equipo
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='logout_timeout.js') }}"></script>
+</body>
+
+</html>

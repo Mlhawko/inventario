@@ -1,0 +1,48 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-navbar">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}">
+            <img src="/static/logochf.png" alt="Logo" class="logo" style="max-width: 150px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="masterDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Master
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="masterDropdown">
+                        <a class="dropdown-item" href="{{ url_for('listar_personas') }}">Personas</a>
+                        <a class="dropdown-item" href="{{ url_for('mostrar_equipos') }}">Equipos</a>
+                        <a class="dropdown-item" href="{{ url_for('listar_areas') }}">Areas</a>
+                        <a class="dropdown-item" href="{{ url_for('crud_tipos_equipos') }}">Tipos</a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('index') }}">Inicio</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                {% if 'user_email' in session %}
+                <li class="nav-item">
+                    <span class="nav-link">Bienvenido, {{ session['user_nombre'] }}</span>
+                </li>
+                <li class="nav-item">
+                    {% if 'login_time' in session %}
+                    <span class="nav-link">Ultima conexion: {{ session['login_time'] }}</span>
+                    {% endif %}
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">Cerrar sesión</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('login') }}">Iniciar sesión</a>
+                </li>
+                {% endif %}
+            </ul>
+            
+        </div>
+    </div>
+</nav>
