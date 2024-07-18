@@ -116,7 +116,7 @@ def login():
             session['user_nombre'] = user.usuarios_nombre
             session['user_ap_paterno'] = user.usuarios_ap_paterno
             session['user_ap_materno'] = user.usuarios_ap_materno
-            session['login_time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            session['login_time'] = datetime.datetime.now().strftime('%Y-%d-%m %H:%M:%S')
 
             flash(f'Bienvenido {user.usuarios_nombre} {user.usuarios_ap_paterno} {user.usuarios_ap_materno}')
             next_page = request.args.get('next')
@@ -164,29 +164,6 @@ def verificar_duplicado(tabla, columnas_valores):
             conexion.close()
 
 
-def verificar_duplicado_persona(nombres, apellidos, correo, id=None):
-    cursor = conexion.cursor()
-    query_comb = "SELECT COUNT(*) FROM persona WHERE nombres = ? AND apellidos = ? AND correo = ?"
-    params_comb = [nombres, apellidos, correo]
-    if id:
-        query_comb += " AND id != ?"
-        params_comb.append(id)
-    
-    cursor.execute(query_comb, params_comb)
-    count_comb = cursor.fetchone()[0]
-    
-    query_email = "SELECT COUNT(*) FROM persona WHERE correo = ?"
-    params_email = [correo]
-    if id:
-        query_email += " AND id != ?"
-        params_email.append(id)
-    
-    cursor.execute(query_email, params_email)
-    count_email = cursor.fetchone()[0]
-
-    cursor.close()
-    
-    return count_comb > 0, count_email > 0
 
 #---------------------------------------------------------
 # Index mostrar personas
@@ -213,7 +190,7 @@ def index():
                 persona
             INNER JOIN
                 area ON persona.area_id = area.id
-                ORDER BY persona.nombres ASC
+            ORDER BY persona.nombres ASC
         '''
 
         cursor.execute(persona_query)
@@ -301,6 +278,8 @@ def index():
         return redirect(url_for('index'))
 
 
+
+
 #--------------------------------------------------------
 # CRUD Persona
 @app.route('/listar_personas', methods=['GET', 'POST'])
@@ -336,9 +315,9 @@ def agregar_persona():
         nombres = request.form['nombres']
         apellidos = request.form['apellidos']
         correo = request.form['correo']
-        rut_completo = request.form['rut'].replace(".", "").replace("-", "")
-        rut = rut_completo[:-1]
-        dv = rut_completo[-1]
+        rut_completo = request.form['rut'].replace(".", "").replace("-", "") if request.form['rut'] else ""
+        rut = rut_completo[:-1] if rut_completo else ""
+        dv = rut_completo[-1] if rut_completo else ""
         area_id = request.form['area']
 
         try:
@@ -354,7 +333,7 @@ def agregar_persona():
 
             cursor = conexion.cursor()
             cursor.execute("INSERT INTO persona (nombres, apellidos, correo, rut, dv, area_id) VALUES (?, ?, ?, ?, ?, ?)",
-                           (nombres, apellidos, correo, rut, dv, area_id))
+                           (nombres, apellidos, correo if correo else "", rut, dv, area_id))
             conexion.commit()
             cursor.close()
             return redirect(url_for('listar_personas'))
@@ -364,6 +343,36 @@ def agregar_persona():
             return render_template('agregar_persona.html', nombres=nombres, apellidos=apellidos, correo=correo, rut=rut, area_id=area_id, areas=areas)
 
     return render_template('agregar_persona.html', areas=areas)
+
+def verificar_duplicado_persona(nombres, apellidos, correo, id=None):
+    cursor = conexion.cursor()
+    
+    query_comb = "SELECT COUNT(*) FROM persona WHERE nombres = ? AND apellidos = ?"
+    params_comb = [nombres, apellidos]
+    if correo:
+        query_comb += " AND correo = ?"
+        params_comb.append(correo)
+    if id:
+        query_comb += " AND id != ?"
+        params_comb.append(id)
+    
+    cursor.execute(query_comb, params_comb)
+    count_comb = cursor.fetchone()[0]
+    
+    count_email = 0
+    if correo:
+        query_email = "SELECT COUNT(*) FROM persona WHERE correo = ?"
+        params_email = [correo]
+        if id:
+            query_email += " AND id != ?"
+            params_email.append(id)
+        
+        cursor.execute(query_email, params_email)
+        count_email = cursor.fetchone()[0]
+
+    cursor.close()
+    
+    return count_comb > 0, count_email > 0
 
 
 
@@ -376,8 +385,8 @@ def editar_persona(id):
         apellidos = request.form['apellidos']
         correo = request.form['correo']
         rut_completo = request.form['rut'].replace(".", "").replace("-", "")
-        rut = rut_completo[:-1]
-        dv = rut_completo[-1]
+        rut = rut_completo[:-1] if rut_completo else ""
+        dv = rut_completo[-1] if rut_completo else ""
         area_id = request.form['area']
 
         try:
@@ -440,10 +449,10 @@ def buscar_personas():
         return 'Error al buscar personas'
 #----------------------------------------
 # CRUD de equipos:
-@app.route('/mostrar_equipos')
-@login_required
+@app.route('/mostrar_equipos', methods=['GET'])
 def mostrar_equipos():
-    search_term = request.args.get('search_term', '')
+    search_term = request.args.get('search_term', '').strip()
+
     try:
         cursor = conexion.cursor()
         query = """
@@ -451,7 +460,9 @@ def mostrar_equipos():
             equipo.id,
             estadoequipo.nombre AS estado_nombre,
             tipoequipo.nombre AS tipo_nombre,
-            COALESCE(unidad.nombre_e, celular.nombre) AS nombre_equipo
+            COALESCE(unidad.nombre_e, celular.nombre) AS nombre_equipo,
+            COALESCE(unidad.serial, celular.serial) AS sn_equipo,
+            COALESCE(unidad.modelo, celular.modelo) AS modelo_equipo
         FROM equipo
         LEFT JOIN tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
         LEFT JOIN unidad ON equipo.unidad_id = unidad.id
@@ -461,17 +472,66 @@ def mostrar_equipos():
             estadoequipo.nombre LIKE ? OR
             tipoequipo.nombre LIKE ? OR
             unidad.nombre_e LIKE ? OR
-            celular.nombre LIKE ?
+            celular.nombre LIKE ? OR
+            unidad.serial LIKE ? OR
+            celular.serial LIKE ? OR
+            unidad.modelo LIKE ? OR
+            celular.modelo LIKE ?
         """
         search_term_wildcard = '%' + search_term + '%'
-        cursor.execute(query, (search_term_wildcard, search_term_wildcard, search_term_wildcard, search_term_wildcard))
+        cursor.execute(query, (search_term_wildcard, search_term_wildcard, search_term_wildcard, search_term_wildcard,
+                               search_term_wildcard, search_term_wildcard, search_term_wildcard, search_term_wildcard))
         equipos = cursor.fetchall()
         cursor.close()
         return render_template('mostrar_equipos.html', equipos=equipos)
     except pyodbc.Error as ex:
-        print('Error al obtener los equipos: {ex}')
+        print(f'Error al obtener los equipos: {ex}')
         flash('Error al obtener los equipos', 'error')
         return redirect(url_for('index'))
+
+# Ruta para buscar equipos dinámicamente
+@app.route('/buscar_equipos', methods=['GET'])
+def buscar_equipos():
+    search_term = request.args.get('search_term', '').strip()
+
+    try:
+        cursor = conexion.cursor()
+        query = """
+        SELECT
+            equipo.id,
+            estadoequipo.nombre AS estado_nombre,
+            tipoequipo.nombre AS tipo_nombre,
+            COALESCE(unidad.nombre_e, celular.nombre) AS nombre_equipo,
+            COALESCE(unidad.serial, celular.serial) AS sn_equipo,
+            COALESCE(unidad.modelo, celular.modelo) AS modelo_equipo
+        FROM equipo
+        LEFT JOIN tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
+        LEFT JOIN unidad ON equipo.unidad_id = unidad.id
+        LEFT JOIN celular ON equipo.celular_id = celular.id
+        LEFT JOIN estadoequipo ON equipo.estadoequipo_id = estadoequipo.id
+        WHERE
+            estadoequipo.nombre LIKE ? OR
+            tipoequipo.nombre LIKE ? OR
+            unidad.nombre_e LIKE ? OR
+            celular.nombre LIKE ? OR
+            unidad.serial LIKE ? OR
+            celular.serial LIKE ? OR
+            unidad.modelo LIKE ? OR
+            celular.modelo LIKE ?
+        """
+        search_term_wildcard = '%' + search_term + '%'
+        cursor.execute(query, (search_term_wildcard, search_term_wildcard, search_term_wildcard, search_term_wildcard,
+                               search_term_wildcard, search_term_wildcard, search_term_wildcard, search_term_wildcard))
+        equipos = cursor.fetchall()
+        cursor.close()
+
+        # Renderizar solo el cuerpo de la tabla de equipos para la respuesta AJAX
+        return render_template('equipos_table_body.html', equipos=equipos)
+    except pyodbc.Error as ex:
+        print(f'Error al buscar equipos: {ex}')
+        return jsonify({'error': 'Error al buscar equipos'})
+
+
 
 #------------------------------------------------------------
 #Obtener tipos de equipo
@@ -898,7 +958,7 @@ def asignar_equipo():
     if request.method == 'POST':
         equipo_ids = request.form.getlist('equipo_id[]')
         persona_id = request.form['persona_id']
-        fecha_asignacion = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        fecha_asignacion = datetime.datetime.now().strftime('%Y-%d-%m %H:%M:%S')
         observaciones = request.form['observaciones']
         archivo_pdf = request.files['archivo_pdf']
 
@@ -942,7 +1002,7 @@ def asignar_equipo():
                     apellidos_persona = persona_info[1].replace(' ', '_')
 
                     # Crear el nombre del archivo
-                    filename = f"ActaEntrega_{nombre_equipo}_{nombres_persona}_{apellidos_persona}_{datetime.datetime.now().strftime('%Y%m%d')}.pdf"
+                    filename = f"ActaEntrega_{nombre_equipo}_{nombres_persona}_{apellidos_persona}_{datetime.datetime.now().strftime('%d%m%Y')}.pdf"
                     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                     archivo_pdf.save(filepath)
 
@@ -1028,10 +1088,10 @@ def devolver_equipo(equipo_id=None):
             return redirect(request.url)
 
         if file and allowed_file(file.filename):
-            filename = f"devolucion_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
+            filename = f"devolucion_{datetime.datetime.now().strftime('%Y%m%d')}.pdf"
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-            fecha_devolucion = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            fecha_devolucion = datetime.datetime.now().strftime('%Y-%d-%m %H:%M:%S')
             observaciones = request.form['observaciones']
             equipos_a_devolver = request.form.getlist('equipos')
 
