@@ -101,9 +101,8 @@
                     {% if equipo[0].almc is not none and equipo[0].almc.strip() != "" %}
                     <tr><th>Almacenamiento</th><td>{{ equipo[0].almc }}</td></tr>
                     {% endif %}
-                    {% if equipo[0].perif is not none and equipo[0].perif.strip() != "" %}
-                    <tr><th>Periféricos</th><td>{{ equipo[0].perif }}</td></tr>
-                    {% endif %}
+                    <tr><th>Accesorios</th><td>{{ equipo[0].perif }}</td></tr>
+                    
                     {% if equipo[0].numsello is not none and equipo[0].numsello.strip() != "" %}
                     <tr><th>Número de Sello</th><td>{{ equipo[0].numsello }}</td></tr>
                     {% endif %}
