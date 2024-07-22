@@ -970,6 +970,8 @@ def asignar_equipo():
         # Verificar que el archivo es un PDF
         if archivo_pdf and archivo_pdf.filename.endswith('.pdf'):
             try:
+                archivo_pdf.seek(0)  # Asegurarse de estar al inicio del archivo antes de leerlo
+
                 for equipo_id in equipo_ids:
                     if not equipo_id:  # Verificar que equipo_id no esté vacío
                         flash('Todos los campos de equipo deben estar seleccionados.', 'asignar_equipo_error')
@@ -989,7 +991,7 @@ def asignar_equipo():
                         flash(f'El equipo con ID {equipo_id} no existe.', 'asignar_equipo_error')
                         return redirect(url_for('asignar_equipo', persona_id=persona_id))
                     
-                    nombre_equipo = equipo_info[0].replace(' ', '_')
+                    
 
                     # Obtener la información de la persona
                     cursor.execute("SELECT nombres, apellidos FROM persona WHERE id = ?", (persona_id,))
@@ -1002,8 +1004,11 @@ def asignar_equipo():
                     apellidos_persona = persona_info[1].replace(' ', '_')
 
                     # Crear el nombre del archivo
-                    filename = f"ActaEntrega_{nombre_equipo}_{nombres_persona}_{apellidos_persona}_{datetime.datetime.now().strftime('%d%m%Y')}.pdf"
+                    filename = f"ActaEntrega_{nombres_persona}_{apellidos_persona}_{datetime.datetime.now().strftime('%d%m%Y')}.pdf"
                     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+                    # Guardar el archivo PDF con el nombre específico
+                    archivo_pdf.seek(0)  # Volver al inicio del archivo
                     archivo_pdf.save(filepath)
 
                     # Inserción en asignacion_equipo
@@ -1059,6 +1064,8 @@ def asignar_equipo():
             return redirect(url_for('index'))
         finally:
             cursor.close()
+
+
 
 
 
