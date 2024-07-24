@@ -4,17 +4,14 @@ import io
 from io import BytesIO
 import os
 import pyodbc
-from flask import Flask, flash, make_response, redirect, render_template, request, send_file, session, url_for, send_from_directory, jsonify, g
+from flask import Flask, flash, make_response, redirect, render_template, request, send_file, session, url_for, send_from_directory, jsonify
 import datetime
-from werkzeug.utils import secure_filename
-from waitress import serve
 from fpdf import FPDF, XPos, YPos
 from openpyxl import Workbook
 import hashlib
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
 import configparser
 import sys
 import re
