@@ -18,20 +18,18 @@ import re
 
 
 
-
-
-
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
+##Se configura una "clave secreta" para la utilizacion de alertas de la libreria Flash.##
 app.config['SECRET_KEY'] = 'chf24'
 
-
+## Se configura la lectura del archivo config.ini
 if getattr(sys, 'frozen', False):
     config_file = os.path.join(os.path.dirname(sys.executable), 'config.ini')
 else:
     config_file = os.path.join(os.path.dirname(__file__), 'config.ini')
 
-
+## Condicion si no se encuentra el config.ini ##
 if not os.path.exists(config_file):
     print(f'Error: El archivo {config_file} no encontrado')
     exit(1)
@@ -40,14 +38,14 @@ if not os.path.exists(config_file):
 config = configparser.ConfigParser()
 config.read(config_file)
 
-
+## Obtener los datos que se proporcionan en el archivo config.ini ##
 server = config.get('database', 'server')
 db = config.get('database', 'db')
 user = config.get('database', 'user')
 password = config.get('database', 'password')
 ruta = config.get('ruta', 'ruta')
-###
-#Conexion a base de datos-------------------------------
+
+## Conexion a base de datos ##
 try:
     conexion = pyodbc.connect(
         'DRIVER={ODBC DRIVER 17 FOR SQL server};SERVER=' + server + ';DATABASE=' + db + 
@@ -59,7 +57,7 @@ except pyodbc.Error as ex:
     print(sqlstate)
     print ('Error al intentar conectarse')
 
-#------------------------------
+## Funcion para obtener conexion a la base de datos ##
 def obtener_conexion():
 
     try:
@@ -74,12 +72,12 @@ def obtener_conexion():
     except pyodbc.Error as ex:
         print(f"Error al intentar conectarse: {ex}")
         return None
-############################################################
+## Declaracion de donde se guardara y que tipo de archivo admitira subir al sitio. ##
 UPLOAD_FOLDER = 'C:/descarga/'
 ALLOWED_EXTENSIONS = {'pdf'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-###
 
+## Funcion de creacion de la etiqueta para Login ##
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -89,9 +87,11 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+## Funcion para "Hashear" una contraseña ##
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
+## Funcion para validar correo y contraseña para login ##
 def validate_user(email, password):
     conexion = obtener_conexion()
     cursor = conexion.cursor()
@@ -100,6 +100,7 @@ def validate_user(email, password):
     conexion.close()
     return user
 
+## Funcion de Login/Inicio de sesion ##
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -122,17 +123,13 @@ def login():
             flash('Correo electrónico o contraseña incorrectos.')
     return render_template('login.html', current_date=session.get('current_date'))
 
-
+## Funcion Logout ##
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
-
-#################################################
-
-
-
+## Funcion de validacion para evitar duplicados ##
 def verificar_duplicado(tabla, columnas_valores):
     conexion = None
     cursor = None
@@ -160,10 +157,7 @@ def verificar_duplicado(tabla, columnas_valores):
         if conexion:
             conexion.close()
 
-
-
-#---------------------------------------------------------
-# Index mostrar personas
+## Funcion y ruta para la pagina principal de inicio/index ##
 @app.route('/', methods=['GET', 'POST'])
 @login_required
 def index():
@@ -274,11 +268,7 @@ def index():
         flash('Error al cargar la página de asignación', 'error')
         return redirect(url_for('index'))
 
-
-
-
-#--------------------------------------------------------
-# CRUD Persona
+## Funcion y ruta para mostrar personas ##
 @app.route('/listar_personas', methods=['GET', 'POST'])
 @login_required
 def listar_personas():
@@ -301,8 +291,7 @@ def listar_personas():
         print(ex)
         return "Error en la consulta de la base de datos"
 
-
-
+## Funcion y ruta para agregar personas ##
 @app.route('/agregar_persona', methods=['GET', 'POST'])
 @login_required
 def agregar_persona():
@@ -341,6 +330,7 @@ def agregar_persona():
 
     return render_template('agregar_persona.html', areas=areas)
 
+## Funcion para validar duplicado personas ##
 def verificar_duplicado_persona(nombres, apellidos, correo, id=None):
     cursor = conexion.cursor()
     
@@ -371,8 +361,7 @@ def verificar_duplicado_persona(nombres, apellidos, correo, id=None):
     
     return count_comb > 0, count_email > 0
 
-
-
+## Funcion y ruta para editar una persona ##
 @app.route('/editar_persona/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar_persona(id):
@@ -410,11 +399,7 @@ def editar_persona(id):
         flash('Ocurrió un error al obtener los datos de la persona', 'error')
         return redirect(url_for('listar_personas'))
 
-
-
-
-
-
+## Funcion para eliminar un registro de persona ##
 @app.route('/eliminar_persona/<int:id>', methods=['POST'])
 @login_required
 def eliminar_persona(id):
@@ -427,28 +412,10 @@ def eliminar_persona(id):
         print(ex)
     return redirect(url_for('listar_personas'))
 
-#--------------------------------------------------------
-#Barra de busqueda
-@app.route('/buscar_personas')
-def buscar_personas():
-    q = request.args.get('q', '')
-    try:
-        cursor = conexion.cursor()
-        cursor.execute('''
-            SELECT * FROM Persona
-            WHERE nombres LIKE ? OR correo LIKE ? OR area LIKE ?
-        ''', ('%' + q + '%', '%' + q + '%', '%' + q + '%'))
-        personas = cursor.fetchall()
-        cursor.close()
-        return render_template('index.html', personas=personas)
-    except pyodbc.Error as ex:
-        print(ex)
-        return 'Error al buscar personas'
-#----------------------------------------
-# CRUD de equipos:
+## Funcion y ruta para mostrar los equipos ##
 @app.route('/mostrar_equipos', methods=['GET'])
 def mostrar_equipos():
-    search_term = request.args.get('search_term', '').strip()
+    search_term = request.args.get('search_term', '').strip() #Tomar los datos de la barra de busqueda para filtrar#
 
     try:
         cursor = conexion.cursor()
@@ -486,67 +453,14 @@ def mostrar_equipos():
         flash('Error al obtener los equipos', 'error')
         return redirect(url_for('index'))
 
-# Ruta para buscar equipos dinámicamente
-@app.route('/buscar_equipos', methods=['GET'])
-def buscar_equipos():
-    search_term = request.args.get('search_term', '').strip()
-
-    try:
-        cursor = conexion.cursor()
-        query = """
-        SELECT
-            equipo.id,
-            estadoequipo.nombre AS estado_nombre,
-            tipoequipo.nombre AS tipo_nombre,
-            COALESCE(unidad.nombre_e, celular.nombre) AS nombre_equipo,
-            COALESCE(unidad.serial, celular.serial) AS sn_equipo,
-            COALESCE(unidad.modelo, celular.modelo) AS modelo_equipo
-        FROM equipo
-        LEFT JOIN tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
-        LEFT JOIN unidad ON equipo.unidad_id = unidad.id
-        LEFT JOIN celular ON equipo.celular_id = celular.id
-        LEFT JOIN estadoequipo ON equipo.estadoequipo_id = estadoequipo.id
-        WHERE
-            estadoequipo.nombre LIKE ? OR
-            tipoequipo.nombre LIKE ? OR
-            unidad.nombre_e LIKE ? OR
-            celular.nombre LIKE ? OR
-            unidad.serial LIKE ? OR
-            celular.serial LIKE ? OR
-            unidad.modelo LIKE ? OR
-            celular.modelo LIKE ?
-        """
-        search_term_wildcard = '%' + search_term + '%'
-        cursor.execute(query, (search_term_wildcard, search_term_wildcard, search_term_wildcard, search_term_wildcard,
-                               search_term_wildcard, search_term_wildcard, search_term_wildcard, search_term_wildcard))
-        equipos = cursor.fetchall()
-        cursor.close()
-
-        # Renderizar solo el cuerpo de la tabla de equipos para la respuesta AJAX
-        return render_template('equipos_table_body.html', equipos=equipos)
-    except pyodbc.Error as ex:
-        print(f'Error al buscar equipos: {ex}')
-        return jsonify({'error': 'Error al buscar equipos'})
-
-
-
-#------------------------------------------------------------
-#Obtener tipos de equipo
+## Funcion para obtener tipos de equipo ##
 def obtener_tipos_equipo():
     cursor = conexion.cursor()
     cursor.execute('SELECT id, nombre FROM tipoequipo ORDER BY nombre ASC ')
     tipos_equipo = cursor.fetchall()
     return tipos_equipo
-#------------------------------------------------------------
-#Obtener estados
-def obtener_estado():
-    cursor = conexion.cursor()
-    cursor.execute('SELECT id, nombre FROM estadoequipo')
-    estado_equipo = cursor.fetchall()
-    return estado_equipo
-#------------------------------------------------------------
 
-
+## Funcion y ruta para agregar equipo ##
 @app.route('/agregar_equipo', methods=['GET', 'POST'])
 def agregar_equipo():
     tipos_equipos = obtener_tipos_equipo()
@@ -621,11 +535,7 @@ def agregar_equipo():
 
     return render_template('agregar_equipo.html', tipos_equipos=tipos_equipos)
 
-
-
-
-
-
+## Funcion para insertar equipo cuando es "unidad" ##
 def insertar_equipo(nombre, marca, modelo, ram, procesador, almc, perif, numsello, serial, numproducto, tipoimpresion, cantidad, observaciones, tipo_equipo_id):
     try:
         cursor = conexion.cursor()
@@ -642,6 +552,7 @@ def insertar_equipo(nombre, marca, modelo, ram, procesador, almc, perif, numsell
     except Exception as e:
         print("Error al insertar equipo:", e)
 
+## Funcion para insertar equipo cuando es 'celular' ##
 def insertar_celular(nombre, marca, modelo, imei1, imei2, serial, ntelefono, observaciones, tipo_equipo_id):
     cursor = conexion.cursor()
     cursor.execute("INSERT INTO celular (nombre, marca, modelo, imei1, imei2, serial, ntelefono) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -655,8 +566,7 @@ def insertar_celular(nombre, marca, modelo, imei1, imei2, serial, ntelefono, obs
     conexion.commit()
     cursor.close()
 
-#---------------------------------------------------
-#Editar equipo:
+## Funcion y ruta editar equipo ##
 @app.route('/editar_equipo/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar_equipo(id):
@@ -747,9 +657,7 @@ def editar_equipo(id):
         return redirect(url_for('mostrar_equipos'))
 
 
-
-#-------------------------------------------------------
-#Funcion Eliminar equipo
+## Funcion Eliminar equipo ##
 @app.route('/eliminar_equipo/<int:id>', methods=['POST'])
 @login_required
 def eliminar_equipo(id):
@@ -799,9 +707,7 @@ def eliminar_equipo(id):
     
     return redirect(url_for('mostrar_equipos'))
 
-
-#--------------------------------------------------
-# Obtener estados
+## Funcion para Obtener estados ##
 def obtener_estados_equipo():
     try:
         cursor = conexion.cursor()
@@ -812,9 +718,8 @@ def obtener_estados_equipo():
     except pyodbc.Error as ex:
         print(ex)
         return None
-#---------------------------------------------------
-#CRUD Area
 
+## Funcion y ruta para mostrar y editar las areas #
 @app.route('/listar_areas', methods=['GET', 'POST'])
 @login_required
 def listar_areas():
@@ -843,6 +748,7 @@ def listar_areas():
             flash('Error al actualizar el área', 'area_error')
         return redirect(url_for('listar_areas'))
 
+## Funcion para crear area ##
 @app.route('/crear_area', methods=['GET', 'POST'])
 @login_required
 def crear_area():
@@ -861,7 +767,7 @@ def crear_area():
             return redirect(url_for('listar_areas'))
     return render_template('listar_areas.html')
 
-
+## Funcion para eliminar area ##
 @app.route('/eliminar_area/<int:id>', methods=['POST'])
 @login_required
 def eliminar_area(id):
@@ -878,8 +784,8 @@ def eliminar_area(id):
             flash('Error al eliminar el área', 'area_error')
             return redirect(url_for('listar_areas'))
     return 'Método no permitido'
-#-----------------------------------------------------------------
-#CRUD TIPOS
+
+## CRUD Tipos de equipo ##
 @app.route('/crud_tipos_equipos', methods=['GET', 'POST'])
 @login_required
 def crud_tipos_equipos():
@@ -931,8 +837,7 @@ def crud_tipos_equipos():
 
     return render_template('crud_tipos_equipos.html', tipos_equipos=tipos_equipos)
 
-#--------------------------------------------------------------------------------
-# Obtener areas
+## Funcion para obtener areas ##
 def obtener_areas():
     try:
         cursor = conexion.cursor()
@@ -944,9 +849,8 @@ def obtener_areas():
         print(ex)
         return None
 
-#----------------------------------------------------------
-#Asignar equipo
 
+## Funcion y ruta para el flujo de asignar equipo
 @app.route('/asignar_equipo', methods=['GET', 'POST'])
 @login_required
 def asignar_equipo():
@@ -959,7 +863,7 @@ def asignar_equipo():
         observaciones = request.form['observaciones']
         archivo_pdf = request.files['archivo_pdf']
 
-        # Verificación de duplicados en el backend
+        # Verificación de duplicados
         if len(equipo_ids) != len(set(equipo_ids)):
             flash('No se pueden asignar equipos duplicados.', 'asignar_equipo_error')
             return redirect(url_for('asignar_equipo', persona_id=persona_id))
@@ -987,7 +891,6 @@ def asignar_equipo():
                     if equipo_info is None:
                         flash(f'El equipo con ID {equipo_id} no existe.', 'asignar_equipo_error')
                         return redirect(url_for('asignar_equipo', persona_id=persona_id))
-                    
                     
 
                     # Obtener la información de la persona
@@ -1062,20 +965,9 @@ def asignar_equipo():
         finally:
             cursor.close()
 
-
-
-
-
-
-
-
-
-
-
-#--------------------------------------------------------------------------
-# Devolucion:
-@app.route('/devolver_equipo', methods=['GET', 'POST'])
-@app.route('/devolver_equipo/<int:equipo_id>', methods=['GET', 'POST'])
+## Funcion y ruta del flujo devolucion ##
+@app.route('/devolver_equipo', methods=['GET', 'POST']) #Manejo de mantener el persona_id desde detalle de la persona
+@app.route('/devolver_equipo/<int:equipo_id>', methods=['GET', 'POST']) #Manejo de la ruta para devolver el equipo
 @login_required
 def devolver_equipo(equipo_id=None):
     cursor = conexion.cursor()
@@ -1203,9 +1095,7 @@ def devolver_equipo(equipo_id=None):
             finally:
                 cursor.close()
 
-
-
-#---
+## Funcion para saber el equipo asignado a la persona ##
 def obtener_persona_id_asociada(equipo_id):
     cursor = conexion.cursor()
     try:
@@ -1217,8 +1107,7 @@ def obtener_persona_id_asociada(equipo_id):
         # Manejo del error: puedes retornar un valor predeterminado, lanzar una excepción, o retornar None
         return None
 
-#---------------------------------------------------------------------------
-#Detalle persona
+## Funcion y ruta para mostrar el detalle persona ##
 @app.route('/detalle_persona/<int:persona_id>')
 @login_required
 def detalle_persona(persona_id):
@@ -1290,13 +1179,7 @@ def detalle_persona(persona_id):
         flash('Error al obtener los detalles de la persona', 'error')
         return redirect(url_for('index'))
 
-
-
-
-
-#----------------------------------------------------
-# Detalle equipo
-
+## Funcion y ruta para el detalle equipo ##
 @app.route('/detalle_equipo/<int:equipo_id>')
 @login_required
 def detalle_equipo(equipo_id):
@@ -1390,8 +1273,7 @@ def detalle_equipo(equipo_id):
         flash('Error al obtener los detalles del equipo', 'error')
         return redirect(url_for('index'))
 
-
-#-----------------------------------------------------------------------
+## Funcion y ruta a la lista equipos con facilidad de filtro y poder exportar excel o pdf ##
 @app.route('/equipos')
 @login_required
 def lista_equipos():
@@ -1450,12 +1332,12 @@ def lista_equipos():
         flash('Error al obtener la lista de equipos', 'error')
         return redirect(url_for('index'))
 
-#-----------------------------------------------------------------------
-
+## Funcion de validar el formato del documento subido ##
 def allowed_file(filename):
     return '.' in filename and \
           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+## Funcion para descargar pdf ##
 @app.route('/descargar_pdf/<pdf_filename>')
 def descargar_pdf(pdf_filename):
     try:
@@ -1464,13 +1346,10 @@ def descargar_pdf(pdf_filename):
         flash('El archivo PDF no se encontró', 'error')
         return redirect(url_for('index'))
 #-----------------------------------------
-
 @app.route('/static/<path:filename>')
 def custom_static(filename):
     return send_from_directory(app.static_folder, filename)
-#------------------------------------------
-
-
+#-----------------------------------------
 def fetch_data(equipo_id):
     cursor = conexion.cursor()
 
@@ -1518,10 +1397,7 @@ def fetch_data(equipo_id):
 
     return equipo_detalle
 
-
-
-
-#-------------------------------------
+## Funcion para exportar en un pdf una lista de equipos ##
 @app.route('/exportar_equipos_pdf', methods=['GET'])
 @login_required
 def exportar_equipos_pdf():
@@ -1610,23 +1486,7 @@ def exportar_equipos_pdf():
         flash('Error al exportar a PDF', 'error')
         return redirect(url_for('lista_equipos'))
 
-
-#---------------------------------------
-
-#---------------------------------------
-def validar_credenciales(username, password):
-    try:
-        cursor = conexion.cursor()
-        cursor.execute('SELECT * FROM Usuarios WHERE username = ? AND password = ?', (username, password))
-        usuario = cursor.fetchone()
-        cursor.close()
-        return usuario is not None
-    except Exception as e:
-        print("Error de base de datos:", e)
-        return False
-#----------------------------------------
-
-#----------------------------------------
+## Funcion para exportar en excel la pagina de inicio segun filtros ##
 @app.route('/exportar_excel', methods=['GET'])
 def exportar_excel():
     try:
@@ -1728,7 +1588,7 @@ def exportar_excel():
         flash('Error al exportar a Excel', 'error')
         return redirect(url_for('index'))
 
-#----
+## Funcion para exportar la lista de equipos filtrada ##
 @app.route('/exportar_equipos_excel', methods=['GET'])
 @login_required
 def exportar_equipos_excel():
@@ -1810,321 +1670,7 @@ def exportar_equipos_excel():
         return redirect(url_for('lista_equipos'))
 
 
-
-
-
-def obtener_personas():
-    cursor = conexion.cursor()
-    try:
-        search_term = ''  # Puedes ajustar este valor según sea necesario
-
-        query = '''
-            SELECT DISTINCT 
-                persona.id, 
-                persona.nombres, 
-                persona.apellidos, 
-                persona.correo, 
-                persona.rut, 
-                persona.dv, 
-                area.nombre AS area_nombre,
-                tipoequipo.nombre AS tipo_nombre,
-                ISNULL(unidad.nombre_e, '') AS nombre_unidad, 
-                ISNULL(celular.nombre, '') AS nombre_celular, 
-                equipo.id AS equipo_id
-            FROM 
-                persona
-            INNER JOIN 
-                area ON persona.area_id = area.id
-            LEFT JOIN 
-                asignacion_equipo ON persona.id = asignacion_equipo.persona_id
-            LEFT JOIN 
-                equipo ON asignacion_equipo.equipo_id = equipo.id
-            LEFT JOIN 
-                unidad ON equipo.unidad_id = unidad.id
-            LEFT JOIN 
-                celular ON equipo.celular_id = celular.id
-            LEFT JOIN 
-                tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
-            WHERE
-                equipo.estadoequipo_id = 2 AND asignacion_equipo.fecha_devolucion IS NULL
-                AND (
-                    persona.nombres LIKE ? OR
-                    persona.apellidos LIKE ? OR
-                    persona.correo LIKE ? OR
-                    persona.rut LIKE ? OR
-                    area.nombre LIKE ? OR
-                    tipoequipo.nombre LIKE ? OR
-                    unidad.nombre_e LIKE ? OR
-                    celular.nombre LIKE ?
-                )
-        '''
-
-        cursor.execute(query, ('%' + search_term + '%',) * 8)  # Aplicar el término de búsqueda a cada campo
-
-        rows = cursor.fetchall()
-        cursor.close()
-
-        personas = {}
-        for row in rows:
-            persona_id = row.id
-            if persona_id not in personas:
-                personas[persona_id] = {
-                    'id': row.id,
-                    'nombres': row.nombres,
-                    'apellidos': row.apellidos,
-                    'correo': row.correo,
-                    'rut': row.rut,
-                    'dv': row.dv,
-                    'area_nombre': row.area_nombre,
-                    'equipos_asignados': []
-                }
-            equipo = {
-                'equipo_id': row.equipo_id,
-                'nombre': row.nombre_unidad if row.nombre_unidad else row.nombre_celular,
-                'tipoequipo': row.tipo_nombre
-            }
-            if equipo['nombre']:
-                personas[persona_id]['equipos_asignados'].append(equipo)
-
-        return list(personas.values())
-    except pyodbc.Error as ex:
-        print('Error al obtener los datos:', ex)
-        flash('Error al cargar la página de asignación', 'error')
-        return []
-
-@app.route('/exportar_reporte_individual/<int:persona_id>', methods=['GET'])
-@login_required
-def exportar_reporte_individual(persona_id):
-    try:
-        # Obtener los datos de la persona por su ID
-        persona = obtener_persona_por_id(persona_id)
-        
-        if persona:
-            # Crear un nuevo libro de Excel y seleccionar la primera hoja
-            wb = Workbook()
-            ws = wb.active
-
-            # Añadir encabezados a la primera fila
-            ws.append(['Rut', 'Nombre', 'Apellido', 'Correo', 'Área', 'Equipos Asignados'])
-
-            # Concatenar los nombres de los equipos asignados en una sola cadena
-            equipos_asignados = ', '.join([f"{equipo['nombre']} - {equipo['tipoequipo']}" for equipo in persona['equipos_asignados']])
-
-            # Agregar los datos de la persona y los equipos asignados en una fila
-            ws.append([persona['rut'], persona['nombres'], persona['apellidos'], persona['correo'], persona['area_nombre'], equipos_asignados])
-
-            # Ajustar el ancho de las columnas
-            for col in ws.columns:
-                max_length = 0
-                for cell in col:
-                    if cell.value:
-                        max_length = max(max_length, len(str(cell.value)))
-                adjusted_width = (max_length + 2) * 1.2
-                ws.column_dimensions[col[0].column_letter].width = adjusted_width
-
-            # Crear una respuesta con el archivo Excel adjunto
-            filename = f"reporte_{persona_id}.xlsx"
-            wb.save(filename)
-            with open(filename, 'rb') as file:
-                response = make_response(file.read())
-            response.headers['Content-Disposition'] = f'attachment; filename=reporte_{persona_id}.xlsx'
-            response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-
-            return response
-        else:
-            flash('Persona no encontrada', 'error')
-            return redirect(url_for('index'))
-    except Exception as ex:
-        print('Error al exportar el reporte individual a Excel:', ex)
-        flash('Error al exportar el reporte individual a Excel', 'error')
-        return redirect(url_for('index'))
-
-
-#---------------------------------------------
-
-def obtener_persona_por_id(persona_id):
-    cursor = conexion.cursor()
-    try:
-        query = '''
-            SELECT DISTINCT 
-                persona.id, 
-                persona.nombres, 
-                persona.apellidos, 
-                persona.correo, 
-                persona.rut, 
-                persona.dv, 
-                area.nombre AS area_nombre
-            FROM 
-                persona
-            INNER JOIN 
-                area ON persona.area_id = area.id
-            WHERE
-                persona.id = ?
-        '''
-
-        cursor.execute(query, (persona_id,))
-        row = cursor.fetchone()
-
-        if row:
-            persona = {
-                'id': row.id,
-                'nombres': row.nombres,
-                'apellidos': row.apellidos,
-                'correo': row.correo,
-                'rut': row.rut,
-                'dv': row.dv,
-                'area_nombre': row.area_nombre,
-                'equipos_asignados': obtener_equipos_por_persona(persona_id)
-            }
-            return persona
-        else:
-            return None
-    except pyodbc.Error as ex:
-        print('Error al obtener la persona por ID:', ex)
-        return None
-    finally:
-        cursor.close()
-
-def obtener_equipos_por_persona(persona_id):
-    cursor = conexion.cursor()
-    try:
-        query = '''
-            SELECT 
-                equipo.id AS equipo_id,
-                ISNULL(unidad.nombre_e, '') AS nombre_unidad, 
-                ISNULL(celular.nombre, '') AS nombre_celular,
-                tipoequipo.nombre AS tipo_nombre
-            FROM 
-                asignacion_equipo
-            INNER JOIN 
-                equipo ON asignacion_equipo.equipo_id = equipo.id
-            LEFT JOIN 
-                unidad ON equipo.unidad_id = unidad.id
-            LEFT JOIN 
-                celular ON equipo.celular_id = celular.id
-            LEFT JOIN 
-                tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
-            WHERE 
-                asignacion_equipo.persona_id = ?
-        '''
-
-        cursor.execute(query, (persona_id,))
-        rows = cursor.fetchall()
-
-        equipos_asignados = []
-        for row in rows:
-            equipo = {
-                'equipo_id': row.equipo_id,
-                'nombre': row.nombre_unidad if row.nombre_unidad else row.nombre_celular,
-                'tipoequipo': row.tipo_nombre
-            }
-            equipos_asignados.append(equipo)
-
-        return equipos_asignados
-    except pyodbc.Error as ex:
-        print('Error al obtener los equipos por persona:', ex)
-        return []
-    finally:
-        cursor.close()
-
-##############################
-
-@app.route('/exportar_pdf', methods=['GET'])
-def exportar_pdf():
-    try:
-        search_term = request.args.get('search_term', '')
-
-        # Crear la consulta SQL con el término de búsqueda
-        query = '''
-            SELECT DISTINCT 
-                persona.id, 
-                persona.nombres, 
-                persona.apellidos, 
-                persona.correo, 
-                area.nombre AS area_nombre,
-                tipoequipo.nombre AS tipo_nombre,
-                ISNULL(unidad.nombre_e, '') AS nombre_unidad, 
-                ISNULL(celular.nombre, '') AS nombre_celular, 
-                equipo.id AS equipo_id
-            FROM 
-                persona
-            INNER JOIN 
-                area ON persona.area_id = area.id
-            LEFT JOIN 
-                asignacion_equipo ON persona.id = asignacion_equipo.persona_id
-            LEFT JOIN 
-                equipo ON asignacion_equipo.equipo_id = equipo.id
-            LEFT JOIN 
-                unidad ON equipo.unidad_id = unidad.id
-            LEFT JOIN 
-                celular ON equipo.celular_id = celular.id
-            LEFT JOIN 
-                tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
-            WHERE
-                equipo.estadoequipo_id = 2 AND asignacion_equipo.fecha_devolucion IS NULL
-                AND (
-                    persona.nombres LIKE ? OR
-                    persona.apellidos LIKE ? OR
-                    persona.correo LIKE ? OR
-                    
-                    area.nombre LIKE ? OR
-                    tipoequipo.nombre LIKE ? OR
-                    unidad.nombre_e LIKE ? OR
-                    celular.nombre LIKE ?
-                )
-        '''
-
-        cursor = conexion.cursor()
-        cursor.execute(query, ('%' + search_term + '%',) * 7)  # Aplicar el término de búsqueda a cada campo
-        rows = cursor.fetchall()
-        cursor.close()
-
-        # Crear un buffer de memoria para almacenar el PDF
-        buffer = io.BytesIO()
-
-        # Crear un documento PDF
-        pdf = SimpleDocTemplate(buffer, pagesize=letter)
-        elements = []
-
-        # Datos para la tabla PDF
-        data = [['Nombre', 'Apellido', 'Correo', 'Área', 'Equipos Asignados']]
-
-        # Recorrer las filas seleccionadas y agregar los datos a la tabla
-        for row in rows:
-            equipos_asignados = ', '.join([f"{row.nombre_unidad if row.nombre_unidad else row.nombre_celular} - {row.tipo_nombre}"])
-            data.append([row.nombres, row.apellidos, row.correo, row.area_nombre, equipos_asignados])
-
-        # Crear la tabla PDF
-        table = Table(data)
-
-        # Estilo de la tabla
-        style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                            ('GRID', (0, 0), (-1, -1), 1, colors.black)])
-
-        table.setStyle(style)
-        elements.append(table)
-
-        # Construir el PDF
-        pdf.build(elements)
-
-        # Devolver el PDF como una respuesta
-        buffer.seek(0)
-        response = make_response(buffer.getvalue())
-        response.headers['Content-Disposition'] = 'attachment; filename=exportacion.pdf'
-        response.headers['Content-Type'] = 'application/pdf'
-
-        return response
-    except Exception as ex:
-        print('Error al exportar a PDF:', ex)
-        flash('Error al exportar a PDF', 'error')
-        return redirect(url_for('index'))
-
-
+## creacion de un header y footer para la generacion de pdf ##
 class PDF(FPDF):
     def header(self):
 
@@ -2161,7 +1707,7 @@ class PDF(FPDF):
 
         # Línea de firma
         
-
+## Generacion de pdf devolucion ##
 @app.route('/exportar_pdf/<int:persona_id>/<int:equipo_id>', methods=['GET'])
 def exportar_pdf_persona(persona_id, equipo_id):
     try:
@@ -2314,8 +1860,8 @@ def exportar_pdf_persona(persona_id, equipo_id):
         print(f'Error al exportar a PDF: {ex}')
         flash('Error al exportar a PDF', 'error')
         return redirect(url_for('index'))
-#-------------------------------------------------------------------------------
 
+## Funcion para generar pdf si son varios equipos ##
 @app.route('/exportar_pdf_varios/<int:persona_id>', methods=['GET'])
 def exportar_pdf_varios(persona_id):
     try:
@@ -2473,16 +2019,9 @@ def exportar_pdf_varios(persona_id):
         return redirect(url_for('index'))
 
 
-
-
-
-
-
-
 ###############################
 ###############################
 ###############################
-
+## comando que permite correr la aplicacion ##
 if __name__ == '__main__':
     app.run(host=ruta, port=5000)
-
