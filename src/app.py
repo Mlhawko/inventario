@@ -1668,6 +1668,90 @@ def exportar_equipos_excel():
         print('Error al exportar a Excel:', ex)
         flash('Error al exportar a Excel', 'error')
         return redirect(url_for('lista_equipos'))
+    
+## Exportacion index pdf filtrado por la barra de busqueda ##
+@app.route('/exportar_pdf', methods=['GET'])
+def exportar_pdf():
+    try:
+        search_term = request.args.get('search_term', '')
+        # Crear la consulta SQL con el término de búsqueda
+        query = '''
+            SELECT DISTINCT 
+                persona.id, 
+                persona.nombres, 
+                persona.apellidos, 
+                persona.correo, 
+                area.nombre AS area_nombre,
+                tipoequipo.nombre AS tipo_nombre,
+                ISNULL(unidad.nombre_e, '') AS nombre_unidad, 
+                ISNULL(celular.nombre, '') AS nombre_celular, 
+                equipo.id AS equipo_id
+            FROM 
+                persona
+            INNER JOIN 
+                area ON persona.area_id = area.id
+            LEFT JOIN 
+                asignacion_equipo ON persona.id = asignacion_equipo.persona_id
+            LEFT JOIN 
+                equipo ON asignacion_equipo.equipo_id = equipo.id
+            LEFT JOIN 
+                unidad ON equipo.unidad_id = unidad.id
+            LEFT JOIN 
+                celular ON equipo.celular_id = celular.id
+            LEFT JOIN 
+                tipoequipo ON equipo.tipoequipo_id = tipoequipo.id
+            WHERE
+                equipo.estadoequipo_id = 2 AND asignacion_equipo.fecha_devolucion IS NULL
+                AND (
+                    persona.nombres LIKE ? OR
+                    persona.apellidos LIKE ? OR
+                    persona.correo LIKE ? OR
+                    
+                    area.nombre LIKE ? OR
+                    tipoequipo.nombre LIKE ? OR
+                    unidad.nombre_e LIKE ? OR
+                    celular.nombre LIKE ?
+                )
+        '''
+        cursor = conexion.cursor()
+        cursor.execute(query, ('%' + search_term + '%',) * 7)  # Aplicar el término de búsqueda a cada campo
+        rows = cursor.fetchall()
+        cursor.close()
+        # Crear un buffer de memoria para almacenar el PDF
+        buffer = io.BytesIO()
+        # Crear un documento PDF
+        pdf = SimpleDocTemplate(buffer, pagesize=letter)
+        elements = []
+        # Datos para la tabla PDF
+        data = [['Nombre', 'Apellido', 'Correo', 'Área', 'Equipos Asignados']]
+        # Recorrer las filas seleccionadas y agregar los datos a la tabla
+        for row in rows:
+            equipos_asignados = ', '.join([f"{row.nombre_unidad if row.nombre_unidad else row.nombre_celular} - {row.tipo_nombre}"])
+            data.append([row.nombres, row.apellidos, row.correo, row.area_nombre, equipos_asignados])
+        # Crear la tabla PDF
+        table = Table(data)
+        # Estilo de la tabla
+        style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                            ('GRID', (0, 0), (-1, -1), 1, colors.black)])
+        table.setStyle(style)
+        elements.append(table)
+        # Construir el PDF
+        pdf.build(elements)
+        # Devolver el PDF como una respuesta
+        buffer.seek(0)
+        response = make_response(buffer.getvalue())
+        response.headers['Content-Disposition'] = 'attachment; filename=exportacion.pdf'
+        response.headers['Content-Type'] = 'application/pdf'
+        return response
+    except Exception as ex:
+        print('Error al exportar a PDF:', ex)
+        flash('Error al exportar a PDF', 'error')
+        return redirect(url_for('index'))
 
 
 ## creacion de un header y footer para la generacion de pdf ##
