@@ -481,7 +481,7 @@ def agregar_equipo():
         modelo = request.form.get('modelo', '')
         serial = request.form.get('serial', '').upper()
 
-        # Limpiar el nombre
+        # Limpiar el nombre ##
         nombre_limpio = re.sub(r'[^A-Za-z0-9]', '', nombre)
 
         try:
@@ -512,6 +512,9 @@ def agregar_equipo():
             elif tipo_equipo_nombre == 'celular':
                 imei1 = request.form.get('imei1', '')
                 imei2 = request.form.get('imei2', '')
+                if verificar_duplicado('Celular', {'serial': serial}):
+                    flash('El serial del celular ya existe en la base de datos', 'agregar_equipo_error')
+                    return render_template('agregar_equipo.html', tipos_equipos=tipos_equipos, form_data=request.form)
                 insertar_celular(nombre_limpio, marca, modelo, imei1, imei2, serial, None, observaciones, tipo_equipo_id)
 
             elif tipo_equipo_nombre == 'accesorios':
@@ -521,7 +524,7 @@ def agregar_equipo():
             elif tipo_equipo_nombre == 'simcard':
                 imei = request.form.get('imei', '')
                 ntelefono = request.form.get('ntelefono', '')
-                insertar_celular(imei, None, None, imei, None, None, ntelefono, observaciones, tipo_equipo_id)
+                insertar_celular(ntelefono, None, None, imei, None, None, ntelefono, observaciones, tipo_equipo_id)
             
             else:
                 insertar_equipo(nombre_limpio, marca, modelo, None, None, None, None, None, serial, None, None, None, observaciones, tipo_equipo_id)
@@ -581,6 +584,7 @@ def editar_equipo(id):
             if equipo:
                 equipo_dict = dict(zip((column[0] for column in cursor.description), equipo))
                 detalle_equipo = None
+                tipo_equipo = None
                 if equipo_dict['unidad_id'] is not None:
                     cursor.execute("SELECT equipo.*, unidad.* FROM equipo INNER JOIN unidad ON equipo.unidad_id = unidad.id WHERE equipo.id = ?", (id,))
                     detalle_equipo = cursor.fetchone()
@@ -625,12 +629,18 @@ def editar_equipo(id):
                 nombre_limpio = re.sub(r'[^A-Za-z0-9]', '', nombre)
 
                 if 'unidad_id' in equipo_dict and equipo_dict['unidad_id'] is not None:
+                    cantidad = request.form.get('cantidad', '')
+                    if cantidad == '':
+                        cantidad = None
+                    else:
+                        cantidad = int(cantidad)
+
                     cursor.execute(
                         "UPDATE unidad SET nombre_e = ?, marca = ?, modelo = ?, serial = ?, ram = ?, procesador = ?, almc = ?, perif = ?, numsello = ?, numproducto = ?, tipoimpresion = ?, cantidad = ? WHERE id = ?",
                         (nombre_limpio, marca, modelo, serial, request.form.get('ram', ''), request.form.get('procesador', ''),
                          request.form.get('almc', ''), request.form.get('perif', ''), request.form.get('numsello', ''),
                          request.form.get('numproducto', ''), request.form.get('tipoimpresion', ''),
-                         request.form.get('cantidad', ''), equipo_dict['unidad_id']))
+                         cantidad, equipo_dict['unidad_id']))
                 elif 'celular_id' in equipo_dict and equipo_dict['celular_id'] is not None:
                     cursor.execute(
                         "UPDATE celular SET nombre = ?, marca = ?, modelo = ?, serial = ?, imei1 = ?, imei2 = ?, ntelefono = ? WHERE id = ?",
@@ -655,6 +665,7 @@ def editar_equipo(id):
     else:
         flash('Método HTTP no permitido', 'error')
         return redirect(url_for('mostrar_equipos'))
+
 
 
 ## Funcion Eliminar equipo ##
@@ -2104,8 +2115,8 @@ def exportar_pdf_varios(persona_id):
 
 
 ###############################
-###############################
+############################### app.run(host=ruta, port=5000)
 ###############################
 ## comando que permite correr la aplicacion ##
 if __name__ == '__main__':
-    app.run(host=ruta, port=5000)
+    app.run(debug=True)
